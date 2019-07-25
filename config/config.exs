@@ -7,9 +7,12 @@
 # General application configuration
 use Mix.Config
 
-config :talk,
-  ecto_repos: [Talk.Repo],
-  generators: [binary_id: true]
+config :talk, ecto_repos: [Talk.Repo]
+
+# specify Ecto.ULID for id column on all tables
+config :talk, Talk.Repo,
+  migration_primary_key: [name: :id, type: :binary_id],
+  migration_timestamps: [type: :utc_datetime_usec]
 
 # Configures the endpoint
 config :talk, TalkWeb.Endpoint,
@@ -26,6 +29,7 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :tzdata, :autoupdate, :disabled
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

@@ -1,4 +1,7 @@
 defmodule Talk.MixProject do
+  @moduledoc """
+  Mix file
+  """
   use Mix.Project
 
   @elixir_version "~> 1.9"
@@ -47,12 +50,14 @@ defmodule Talk.MixProject do
       {:phoenix_ecto, "~> 4.0"},
       {:guardian, "~> 1.2"},
       {:ecto_sql, "~> 3.1"},
+      {:ecto_ulid, "~> 0.2.0"},
       {:postgrex, ">= 0.0.0"},
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:timex, "~> 3.6"},
       {:credo, "~>  1.1", only: [:dev, :test], runtime: false},
       {:plug_cowboy, "~> 2.0"},
+      {:tesla, "~> 1.2"},
       # AWS S3 deps
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
@@ -71,8 +76,6 @@ defmodule Talk.MixProject do
     [
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      "ecto.migrate": ["ecto.migrate"],
-      "ecto.rollback": ["ecto.rollback"],
       test: ["ecto.create --quiet", "ecto.migrate", "test"]
     ]
   end

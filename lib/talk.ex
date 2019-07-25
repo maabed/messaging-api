@@ -11,6 +11,7 @@ defmodule Talk do
     children = [
       # Start the Ecto repository
       supervisor(Talk.Repo, []),
+      supervisor(Talk.SapienRepo, []),
       # Start the endpoint when the application starts
       supervisor(TalkWeb.Endpoint, []),
       supervisor(Absinthe.Subscription, [TalkWeb.Endpoint])
