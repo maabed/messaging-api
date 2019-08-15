@@ -5,6 +5,9 @@ defmodule Talk.Repo.Migrations.AddUserLog do
   def up do
     execute """
     CREATE TYPE log_event AS ENUM (
+      'MSG_CREATED',
+      'MSG_EDITED',
+      'MSG_DELETED',
       'MARKED_AS_READ',
       'MARKED_AS_UNREAD',
       'SUBSCRIBED',
@@ -12,12 +15,11 @@ defmodule Talk.Repo.Migrations.AddUserLog do
     )
     """
 
-    create table(:user_log, primary_key: false) do
-      add :id, :binary_id, primary_key: true
+    create table(:user_log) do
       add :event, :log_event, null: false
       add :happen_at, :utc_datetime, null: false
 
-      add :msg_id, references(:messages), null: false
+      add :message_id, references(:messages), null: false
       add :user_id, references(:users, type: :string), null: false
     end
   end

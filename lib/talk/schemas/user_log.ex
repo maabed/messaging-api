@@ -8,16 +8,26 @@ defmodule Talk.Schemas.UserLog do
   alias Talk.Schemas.{Message, User}
 
   @type t :: %__MODULE__{}
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
-
+  @timestamps_opts [type: :utc_datetime_usec]
   schema "user_log" do
     field :event, :string
 
-    belongs_to :user, User
-    belongs_to :msg, Message, foreign_key: :message_id
+    belongs_to :user, User, type: :string
+    belongs_to :message, Message
 
     timestamps(inserted_at: :happen_at, updated_at: false)
+  end
+
+  def message_created(%Message{} = message, %User{} = user) do
+    insert(message, user, "MSG_CREATED")
+  end
+
+  def message_edited(%Message{} = message, %User{} = user) do
+    insert(message, user, "MSG_EDITED")
+  end
+
+  def message_deleted(%Message{} = message, %User{} = user) do
+    insert(message, user, "MSG_DELETED")
   end
 
   def marked_as_read(%Message{} = message, %User{} = user) do
@@ -36,10 +46,19 @@ defmodule Talk.Schemas.UserLog do
     insert(message, user, "UNSUBSCRIBED")
   end
 
+  def message_reaction_created(%Message{} = message, %User{} = user) do
+    insert(message, user, "MSG_REACTION_CREATED")
+  end
+
+
+  def message_reaction_deleted(%Message{} = message, %User{} = user) do
+    insert(message, user, "MSG_REACTION_DELETED")
+  end
+
   defp insert(message, user, event) do
     params = %{
       event: event,
-      msg_id: message.id,
+      message_id: message.id,
       user_id: user.id
     }
 
