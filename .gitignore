@@ -42,3 +42,5 @@ talk-*.tar
 
 .vscode/
 .idea/
+
+.keep.md

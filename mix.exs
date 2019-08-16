@@ -1,7 +1,6 @@
 defmodule Talk.MixProject do
-  @moduledoc """
-  Mix file
-  """
+  @moduledoc "Mix file"
+
   use Mix.Project
 
   @elixir_version "~> 1.9"
@@ -58,6 +57,7 @@ defmodule Talk.MixProject do
       {:credo, "~>  1.1", only: [:dev, :test], runtime: false},
       {:plug_cowboy, "~> 2.0"},
       {:tesla, "~> 1.2"},
+      {:basic_auth, "~> 2.2"},
       # AWS S3 deps
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
