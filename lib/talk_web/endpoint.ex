@@ -1,9 +1,17 @@
 defmodule TalkWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :talk
+  use Absinthe.Phoenix.Endpoint
 
   socket "/socket", TalkWeb.UserSocket,
-    websocket: true,
-    longpoll: false
+    websocket: [
+      timeout: 45_000,
+      check_origin: [
+        "//127.0.0.1",
+        "//localhost",
+        "//*.sapien.network",
+        "//sapien-chat.herokuapp.com"
+      ]
+    ]
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -27,7 +35,7 @@ defmodule TalkWeb.Endpoint do
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
-    json_decoder: Phoenix.json_library()
+    json_decoder: Jason
 
   plug Plug.MethodOverride
   plug Plug.Head
