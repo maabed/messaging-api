@@ -7,16 +7,15 @@ defmodule Talk.Repo.Migrations.CreateGroupUsers do
     execute """
     CREATE TYPE group_user_state AS ENUM (
       'SUBSCRIBED',
-      'NOT_SUBSCRIBED',
+      'UNSUBSCRIBED',
       'MUTED',
-      'ARCHIVED',
-      'DELETED'
+      'ARCHIVED'
     )
     """
-    create table(:group_users, primary_key: false) do
-      add :id, :binary_id, primary_key: true
+    create table(:group_users) do
       add :role, :group_user_role, default: "MEMBER", null: false
       add :state, :group_user_state, default: "SUBSCRIBED", null: false
+      add :bookmarked, :boolean, default: false, null: false
 
       add :group_id, references(:groups), null: false
       add :user_id, references(:users, type: :string), null: false

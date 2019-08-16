@@ -6,23 +6,20 @@ defmodule Talk.Schemas.MessageUser do
   import Ecto.Changeset
   alias Talk.Schemas.{Group, Message, User}
 
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
+  @type t :: %__MODULE__{}
+  @timestamps_opts [type: :utc_datetime_usec]
   schema "message_users" do
-    field :state, :string
-    field :read_at, :utc_datetime
-    field :bookmaked, :boolean, default: false
+    field :state, :string, read_after_writes: true
 
     belongs_to :group, Group
     belongs_to :user, User, type: :string
-    belongs_to :msg, Message, foreign_key: :message_id
+    belongs_to :message, Message
 
     timestamps()
   end
 
-  @doc false
-  def changeset(message_user, attrs) do
+  def create_changeset(message_user, attrs) do
     message_user
-    |> cast(attrs, [:group_id, :user_id, :msg_id])
+    |> cast(attrs, [:group_id, :user_id, :message_id])
   end
 end

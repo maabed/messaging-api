@@ -4,10 +4,9 @@ defmodule Talk.Repo.Migrations.CreateMessages do
 
   def up do
     execute("CREATE TYPE message_type AS ENUM ('TEXT','AUDIO','VIDEO','IMAGE','DRAWING')")
-    execute("CREATE TYPE message_state AS ENUM ('VALID','INVALID','EXPIRED', 'DELETED')")
+    execute("CREATE TYPE message_state AS ENUM ('VALID','EXPIRED', 'DELETED')")
 
-    create table(:messages, primary_key: false) do
-      add :id, :binary_id, null: false, primary_key: true
+    create table(:messages) do
       add :body, :text
       add :type, :message_type, default: "TEXT", null: false
       add :state, :message_state, default: "VALID", null: false

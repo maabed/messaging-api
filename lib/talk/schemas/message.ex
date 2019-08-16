@@ -5,27 +5,39 @@ defmodule Talk.Schemas.Message do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Talk.Schemas.{MessageUser, User}
+  alias Talk.Schemas.{Group, MessageGroup, MessageFile, MessageUser, MessageReaction, User}
 
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
-
+  @type t :: %__MODULE__{}
+  @timestamps_opts [type: :utc_datetime_usec]
   schema "messages" do
     field :body, :string
     field :is_request, :boolean, default: false
-    field :state, :string
-    field :type, :string
+    field :state, :string, read_after_writes: true
+    field :type, :string, read_after_writes: true
+
+    field :recipient_username, {:array, :string}, virtual: true
+    field :last_activity_at, :utc_datetime, virtual: true
 
     belongs_to :user, User, type: :string
     has_many :message_users, MessageUser
+    has_many :recipients, through: [:message_users, :user]
+    has_many :message_files, MessageFile
+    has_many :message_reactions, MessageReaction
+    has_many :files, through: [:message_files, :file]
+    many_to_many :groups, Group, join_through: MessageGroup
 
     timestamps()
   end
 
-  @doc false
-  def changeset(message, attrs) do
+  def create_changeset(message, attrs) do
     message
     |> cast(attrs, [:user_id, :body])
+    |> validate_required([:body])
+  end
+
+  def update_changeset(struct, attrs \\ %{}) do
+    struct
+    |> cast(attrs, [:body])
     |> validate_required([:body])
   end
 end
