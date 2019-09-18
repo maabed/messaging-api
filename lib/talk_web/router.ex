@@ -1,7 +1,6 @@
 defmodule TalkWeb.Router do
   use TalkWeb, :router
   use Plug.ErrorHandler
-  require Logger
 
   @env Mix.env()
 
@@ -10,11 +9,8 @@ defmodule TalkWeb.Router do
     plug TalkWeb.Plug.AuthPipeline
   end
 
-  pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_flash
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+  pipeline :webhooks do
+    plug(:accepts, ["json"])
   end
 
   pipeline :basic_auth do
@@ -38,6 +34,12 @@ defmodule TalkWeb.Router do
         interface: :playground,
         default_url: "/graphql"
     end
+  end
+
+  scope "/webhooks" do
+    pipe_through :webhooks
+
+    forward "/sync", TalkWeb.Plug.Sync
   end
 
   scope "/health-check" do
