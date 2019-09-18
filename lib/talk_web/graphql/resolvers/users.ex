@@ -67,9 +67,9 @@ defmodule TalkWeb.Resolver.Users do
     end
   end
 
-  @spec update_user_thumbnail(map(), info()) :: user_mutation_result()
-  def update_user_thumbnail(%{data: data}, %{context: %{user: user}}) do
-    case Users.update_thumbnail(user, data) do
+  @spec update_user_avatar(map(), info()) :: user_mutation_result()
+  def update_user_avatar(%{data: data}, %{context: %{user: user}}) do
+    case Users.update_avatar(user, data) do
       {:ok, user} ->
         {:ok, %{success: true, user: user, errors: []}}
 

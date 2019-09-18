@@ -6,13 +6,13 @@ defmodule Talk.AssetStore do
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
 
-  @doc "Uploads an thumbnail with a randomly-generated file name."
-  @spec persist_thumbnail(String.t()) :: {:ok, filename :: String.t()} | :error
-  def persist_thumbnail(data) do
+  @doc "Uploads an avatar with a randomly-generated file name."
+  @spec persist_avatar(String.t()) :: {:ok, filename :: String.t()} | :error
+  def persist_avatar(data) do
     case decode_base64_data_url(data) do
       {:ok, binary_data} ->
         binary_data
-        |> build_thumbnail_path()
+        |> build_avatar_path()
         |> @adapter.persist(@bucket, binary_data, nil)
 
       :error ->
@@ -20,9 +20,9 @@ defmodule Talk.AssetStore do
     end
   end
 
-  @doc "Generates the URL for a given thumbnail filename."
-  @spec thumbnail_url(String.t()) :: String.t()
-  def thumbnail_url(pathname), do: @adapter.public_url(pathname, @bucket)
+  @doc "Generates the URL for a given avatar filename."
+  @spec avatar_url(String.t()) :: String.t()
+  def avatar_url(pathname), do: @adapter.public_url(pathname, @bucket)
 
   @doc "Uploads a file."
   @spec persist_file(String.t(), String.t(), binary(), String.t()) :: {:ok, String.t()} | {:error, any()}
@@ -54,10 +54,10 @@ defmodule Talk.AssetStore do
 
   defp decode_base64_data(_), do: :error
 
-  defp build_thumbnail_path(binary_data) do
+  defp build_avatar_path(binary_data) do
     binary_data
     |> image_extension()
-    |> unique_filename("thumbnail")
+    |> unique_filename("avatar")
   end
 
   defp unique_filename(extension, prefix), do: prefix <> "/" <> Ecto.UUID.generate() <> extension

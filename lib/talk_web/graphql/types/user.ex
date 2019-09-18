@@ -10,7 +10,7 @@ defmodule TalkWeb.Type.User do
 
   object :user do
     field :id, non_null(:id)
-    field :name, non_null(:string)
+    field :display_name, non_null(:string)
     field :email, non_null(:string)
     field :username, non_null(:string)
     field :profile_id, non_null(:string)
@@ -45,10 +45,10 @@ defmodule TalkWeb.Type.User do
       end
     end
 
-    field :thumbnail, :string do
+    field :avatar, :string do
       resolve fn user, _, _ ->
-        if user.thumbnail do
-          {:ok, AssetStore.thumbnail_url(user.thumbnail)}
+        if user.avatar do
+          {:ok, AssetStore.avatar_url(user.avatar)}
         else
           {:ok, nil}
         end
@@ -67,16 +67,16 @@ defmodule TalkWeb.Type.User do
 
   object :user_mutations do
     field :update_user, type: :update_user_response do
-      arg :name, :string
+      arg :display_name, :string
       arg :username, :string
       arg :email, :string
       arg :time_zone, :string
       resolve &UserResolver.update_user/2
     end
 
-    field :update_user_thumbnail, type: :update_user_response do
+    field :update_user_avatar, type: :update_user_response do
       arg :data, non_null(:string)
-      resolve &UserResolver.update_user_thumbnail/2
+      resolve &UserResolver.update_user_avatar/2
     end
   end
 
