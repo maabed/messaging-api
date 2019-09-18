@@ -5,7 +5,7 @@ defmodule Talk.Schemas.Group do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Talk.Handles
+  alias Talk.Utils
   alias Talk.Schemas.{GroupUser, Message, MessageGroup, User}
 
   @type t :: %__MODULE__{}
@@ -41,6 +41,6 @@ defmodule Talk.Schemas.Group do
   defp validate(changeset) do
     changeset
     |> validate_required([:name])
-    |> Handles.validate_format(:name)
+    |> Utils.validate_format(:name)
   end
 end

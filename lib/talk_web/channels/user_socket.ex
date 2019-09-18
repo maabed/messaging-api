@@ -11,7 +11,7 @@ defmodule TalkWeb.UserSocket do
   ## Channels
   channel "messages:*", TalkWeb.MessageChannel
 
-  def connect(%{"Authorization" => auth}, socket) do
+  def connect(%{"authorization" => auth}, socket) do
     with "Bearer " <> token <- auth, {:ok, %{user: user}} <- Auth.resource_from_token(token) do
       socket_with_opts =
         socket

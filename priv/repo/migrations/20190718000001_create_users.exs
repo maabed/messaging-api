@@ -11,10 +11,11 @@ defmodule Talk.Repo.Migrations.CreateSapienUserSchema do
     create table(:users, primary_key: false) do
       add :id, :string, primary_key: true
       add :username, :citext, null: false
-      add :name, :text, null: false
+      add :display_name, :text, null: false
       add :email, :citext, null: false
       add :profile_id, :string, null: false
-      add :thumbnail, :text
+      add :avatar, :text
+      add :time_zone, :text
       add :inserted_at, :utc_datetime_usec, default: fragment("NOW()")
       add :updated_at, :utc_datetime_usec, default: fragment("NOW()")
     end
