@@ -49,12 +49,13 @@ defmodule Talk.MixProject do
       {:phoenix_ecto, "~> 4.0"},
       {:guardian, "~> 1.2"},
       {:ecto_sql, "~> 3.1"},
-      {:ecto_ulid, "~> 0.2.0"},
       {:postgrex, ">= 0.0.0"},
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:timex, "~> 3.6"},
+      {:csv, "~> 2.3"},
       {:credo, "~>  1.1", only: [:dev, :test], runtime: false},
+      {:faker, "~> 0.12", only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0"},
       {:tesla, "~> 1.2"},
       {:basic_auth, "~> 2.2"},
@@ -74,8 +75,9 @@ defmodule Talk.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "ecto.setup": ["ecto.create", "ecto.load --skip-if-loaded", "ecto.migrate"],
+      "ecto.migrate": ["ecto.migrate", "ecto.dump"],
+      "ecto.reset": ["ecto.drop", "ecto.setup", "ecto.dump"],
       test: ["ecto.create --quiet", "ecto.migrate", "test"]
     ]
   end
