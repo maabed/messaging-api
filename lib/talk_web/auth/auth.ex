@@ -5,6 +5,9 @@ defmodule TalkWeb.Auth do
 
   alias Talk.Repo
   alias Talk.Schemas.User
+  require Logger
+
+  @aud Application.get_env(:talk, :jwt)[:aud]
 
   def current_user(conn) do
     TalkWeb.Auth.Plug.current_resource(conn)
@@ -26,8 +29,37 @@ defmodule TalkWeb.Auth do
     {:ok, token}
   end
 
-  def refresh_token(jwt) do
-    {:ok, _, new_token} = TalkWeb.Auth.refresh(jwt)
-    {:ok, new_token}
+  def refresh_token(token) do
+    token
+    |> TalkWeb.Auth.refresh()
+    |> case do
+      {:ok, _old, {new_token, _new_claims}} ->
+        {:ok, new_token}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  # Guardian hooks
+  def on_verify(claims, _token, _options) do
+    Logger.info("on_verify claims: #{inspect claims}")
+    case claims do
+      %{"aud" => @aud} -> {:ok, claims}
+      _ -> {:error, :invalid_audience}
+    end
+
+    case claims do
+      %{"iss" => "sapien"} -> {:ok, claims}
+      _ -> {:error, :invalid_issuer}
+    end
+  end
+
+  def build_claims(claims, _resource, _opts) do
+    claims_with_aud =
+    claims
+    |> Map.put("aud", @aud)
+
+    {:ok, claims_with_aud}
   end
 end
