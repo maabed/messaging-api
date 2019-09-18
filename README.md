@@ -13,7 +13,7 @@ To start chat server:
 * Copy jwt RSA key pairs from same 1password file under **Related Items** section, to `priv/keys/`
 * Install dependencies with `mix deps.get`
 * Create and migrate database with `mix ecto.setup`
-* Make sure sapien app is up using [DEV-2632-sync-db](DEV-2632-sync-db) branch.
+* Make sure sapien app is up using [DEV-2632-sync-db](https://github.com/SapienNetwork/sapien-v2-backend/tree/DEV-2632-sync-db) branch.
 * Create a user on Sapien App or use [mix task below](#creating-user-and-generat-JWT-tokon).
 * Seed sapien users/followers tables into chat db with `mix run priv/repo/seeds.exs`
 * Start Phoenix endpoint with `source .env && iex -S mix phx.server`
