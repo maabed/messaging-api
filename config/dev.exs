@@ -3,8 +3,8 @@ use Mix.Config
 config :talk, TalkWeb.Endpoint,
   http: [port: 7000],
   debug_errors: true,
-  code_reloader: true,
-  check_origin: false
+  code_reloader: true
+  # check_origin: false
 
 # main database
 config :talk, Talk.Repo,
@@ -12,19 +12,19 @@ config :talk, Talk.Repo,
   password: "postgres",
   database: "talk_dev",
   hostname: "localhost",
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 40,
-  log: String.to_atom(System.get_env("SQL_LOG")) || :info
+  pool_size: 20,
+  timeout: 240_000,
+  log: String.to_atom(System.get_env("SQL_LOG")) || :warn
 
 # sapien database
 config :talk, Talk.SapienRepo,
-  username: "postgres",
-  password: "postgres",
+  username: "sapien",
+  password: "sapien",
   database: "sapien",
   hostname: "localhost",
-  show_sensitive_data_on_connection_error: true,
   pool_size: 10,
-  log: String.to_atom(System.get_env("SQL_LOG")) || :info
+  timeout: 240_000,
+  log: String.to_atom(System.get_env("SQL_LOG")) || :warn
 
 config :logger, :console, format: "[$level] $message\n"
 

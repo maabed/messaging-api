@@ -8,24 +8,26 @@ config :talk, Talk.Repo, migration_timestamps: [type: :utc_datetime_usec]
 
 config :talk, TalkWeb.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: "IXE7RLjiC2vuP8lx8AxxWJr3xulxnEqCCH/s80Y7p1fL7zW8lA/WOOx2qigjw5eX",
+  secret_key_base: System.get_env("SECRET_KEY_BASE"),
   render_errors: [view: TalkWeb.ErrorView, accepts: ~w(json)],
   pubsub: [name: Talk.PubSub, adapter: Phoenix.PubSub.PG2],
-  watchers: []
+  watchers: [],
+  check_origin: ["//localhost", "//*.sapien.network", "//sapien-chat.herokuapp.com"]
+
+config :talk, :jwt, aud: [
+  "sapien.network",
+  "beta.sapien.network",
+  "talk.sapien.network",
+  "notifier.sapien.network"
+]
 
 config :talk, TalkWeb.Auth,
   issuer: "sapien",
   ttl: {120, :days},
-  secret_key: "0B1xZiXa9OqHSSR7KhAwTRD3GSDoXB3N8S1VOHyr4pL5Bi0YdMqX9/FWDxHWXRwL"
-  # allowed_algos: ["ES256"],
-  # secret_fetcher: TalkWeb.Auth.SecretFetcher
-
-config :talk,
-  basic_auth: [
-    username: System.get_env("BASIC_AUTH_USERNAME"),
-    password: System.get_env("BASIC_AUTH_PASSWORD"),
-    realm: "GraphiQL Endpoint"
-  ]
+  allowed_algos: ["RS256"],
+  allowed_drift: 2000,
+  verify_issuer: true,
+  secret_fetcher: TalkWeb.Auth.SecretFetcher
 
 config :talk, :asset_store,
   bucket: System.get_env("ASSET_STORE_BUCKET"),
