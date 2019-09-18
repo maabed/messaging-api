@@ -2,7 +2,7 @@ defmodule Talk.Users do
   @moduledoc " The Users context."
 
   import Ecto.Query
-
+  require Logger
   alias Talk.AssetStore
   alias Ecto.Changeset
   alias Talk.Repo
@@ -24,7 +24,18 @@ defmodule Talk.Users do
         {:ok, user}
 
       _ ->
-        {:error, "User not found"}
+        {:error, :not_found}
+    end
+  end
+
+  @spec get_user_by_email(String.t()) :: query_result()
+  def get_user_by_email(email) do
+    case Repo.get_by!(User, email: email) do
+      %User{} = user ->
+        {:ok, user}
+
+      _ ->
+        {:error, :not_found}
     end
   end
 
@@ -40,7 +51,18 @@ defmodule Talk.Users do
         {:ok, user}
 
       _ ->
-        {:error, "User not found"}
+        {:error, :not_found}
+    end
+  end
+
+  @spec get_user_by_profile_id(String.t()) :: query_result()
+  def get_user_by_profile_id(profile_id) do
+    case Repo.get_by!(User, profile_id: profile_id) do
+      %User{} = user ->
+        {:ok, user}
+
+      _ ->
+        {:error, :not_found}
     end
   end
 
@@ -55,7 +77,33 @@ defmodule Talk.Users do
         {:ok, user}
 
       _ ->
-        {:error, "User not found"}
+        {:error, :not_found}
+    end
+  end
+
+  @spec get_user_by_username( String.t()) :: query_result()
+  def get_user_by_username(username) do
+    case Repo.get_by!(User, username: username) do
+      %User{} = user ->
+        {:ok, user}
+
+      _ ->
+        {:error, :not_found}
+    end
+  end
+
+  def get_user_by_username(%User{} = user, username) do
+    query =
+      user
+      |> users_base_query()
+      |> where([u], u.username == ^username)
+
+    case Repo.one(query) do
+      %User{} = user ->
+        {:ok, user}
+
+      _ ->
+        {:error, :not_found}
     end
   end
 
@@ -70,7 +118,7 @@ defmodule Talk.Users do
         {:ok, user}
 
       _ ->
-        {:error, "User not found"}
+        {:error, :not_found}
     end
   end
 
@@ -78,7 +126,7 @@ defmodule Talk.Users do
   def create_user(params) do
     %User{}
     |> User.create_changeset(params)
-    |> Repo.insert()
+    |> Repo.insert(on_conflict: :nothing)
     |> after_create_user()
   end
 
@@ -93,17 +141,34 @@ defmodule Talk.Users do
     |> after_update_user()
   end
 
-  defp after_update_user({:ok, %{user: user}}), do: {:ok, user}
+  defp after_update_user({:ok, %User{} = user}), do: {:ok, user}
   defp after_update_user({:error, :user, %Changeset{} = changeset, _}), do: {:error, changeset}
   defp after_update_user(_), do: {:error, "An unexpected error occurred"}
 
-  @spec update_thumbnail(User.t(), String.t()) :: changeset_result()
-  def update_thumbnail(user, raw_data) do
+  @spec update_avatar(User.t(), String.t()) :: changeset_result()
+  def update_avatar(user, raw_data) do
     raw_data
-    |> AssetStore.persist_thumbnail()
-    |> set_user_thumbnail(user)
+    |> AssetStore.persist_avatar()
+    |> set_user_avatar(user)
   end
 
-  defp set_user_thumbnail({:ok, filename}, user), do: update_user(user, %{thumbnail: filename})
-  defp set_user_thumbnail(:error, _user), do: {:error, "An error occurred updating thumbnail"}
+  defp set_user_avatar({:ok, filename}, user), do: update_user(user, %{avatar: filename})
+  defp set_user_avatar(:error, _user), do: {:error, "An error occurred updating avatar"}
+
+
+  def delete_user(%User{} = user) do
+    user
+    |> Repo.delete()
+    |> after_delete_user()
+
+    {:ok, true}
+  end
+
+  defp after_delete_user({:ok, _user}) do
+    # remove users channel?
+    :ok
+  end
+
+  defp after_delete_user(err), do: err
+
 end
