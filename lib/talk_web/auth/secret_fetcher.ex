@@ -5,7 +5,7 @@ defmodule TalkWeb.Auth.SecretFetcher do
 
   def fetch_signing_secret(_module, _opts) do
     secret =
-      System.get_env("JWT_PRIVATE_KEY")
+      "private-rsa-2048.pem"
       |> fetch()
 
     {:ok, secret}
@@ -13,16 +13,15 @@ defmodule TalkWeb.Auth.SecretFetcher do
 
   def fetch_verifying_secret(_module, _headers, _opts) do
     secret =
-      System.get_env("JWT_PUBLIC_KEY")
+      "public-rsa-2048.pem"
       |> fetch()
 
     {:ok, secret}
   end
 
   defp fetch(key) do
-    key
-    |> Kernel.||("")
-    |> String.replace("\\n", "\n")
-    |> JOSE.JWK.from_pem()
+    Application.app_dir(:talk, "priv/keys")
+    |> Path.join(key)
+    |> JOSE.JWK.from_pem_file()
   end
 end
