@@ -44,3 +44,11 @@ talk-*.tar
 .idea/
 
 .keep.md
+
+# jwt public/private key pairs
+priv/keys
+
+# sapien db tables
+priv/sapien_db/users.csv
+priv/sapien_db/followers.csv
+priv/sapien_db/blocked_profiles.csv
