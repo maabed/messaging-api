@@ -46,7 +46,7 @@ talk-*.tar
 .keep.md
 
 # jwt public/private key pairs
-priv/keys
+priv/keys/*.pem
 
 # sapien db tables
 priv/sapien_db/users.csv
