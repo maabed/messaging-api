@@ -2,24 +2,19 @@ use Mix.Config
 
 config :talk,
   ecto_repos: [Talk.Repo],
-  env: Mix.env()
+  env: Mix.env(),
+  origins: String.split(System.get_env("ORIGINS"), ~r{\s+}, trim: true),
+  jwt_aud: String.split(System.get_env("JWT_AUD"), ~r{\s+}, trim: true)
 
 config :talk, Talk.Repo, migration_timestamps: [type: :utc_datetime_usec]
 
 config :talk, TalkWeb.Endpoint,
-  url: [host: "localhost"],
+  url: [host: System.get_env("HOST")],
   secret_key_base: System.get_env("SECRET_KEY_BASE"),
   render_errors: [view: TalkWeb.ErrorView, accepts: ~w(json)],
   pubsub: [name: Talk.PubSub, adapter: Phoenix.PubSub.PG2],
   watchers: [],
-  check_origin: ["//localhost", "//*.sapien.network", "//sapien-chat.herokuapp.com"]
-
-config :talk, :jwt, aud: [
-  "sapien.network",
-  "beta.sapien.network",
-  "talk.sapien.network",
-  "notifier.sapien.network"
-]
+  check_origin: String.split(System.get_env("ORIGINS"), ~r{\s+}, trim: true)
 
 config :talk, TalkWeb.Auth,
   issuer: "sapien",

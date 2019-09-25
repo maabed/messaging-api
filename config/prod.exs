@@ -1,19 +1,17 @@
 use Mix.Config
 
 config :talk, TalkWeb.Endpoint,
-  http: [port: {:system, "PORT"}],
-  url: [host: System.get_env("HOST")],
+  http: [port: {:system, "PORT"}, compress: true],
   secret_key_base: System.get_env("SECRET_KEY_BASE"),
   debug_errors: true,
-  code_reloader: false,
-  check_origin: ["//localhost", "//*.sapien.network", "//sapien-chat.herokuapp.com"]
+  code_reloader: false
 
 config :talk, Talk.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: System.get_env("DATABASE_URL"),
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "20"),
   ssl: true,
-  timeout: 240_000,
+  timeout: 90_000,
   log: String.to_atom(System.get_env("SQL_LOG")) || false
 
 config :talk, Talk.SapienRepo,
@@ -21,7 +19,7 @@ config :talk, Talk.SapienRepo,
   url: System.get_env("SAPIEN_DATABASE_URL"),
   pool_size: String.to_integer(System.get_env("SAPIEN_POOL_SIZE") || "10"),
   ssl: true,
-  timeout: 240_000,
+  timeout: 90_000,
   log: String.to_atom(System.get_env("SQL_LOG")) || false
 
 config :talk,

@@ -2,15 +2,12 @@ defmodule TalkWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :talk
   use Absinthe.Phoenix.Endpoint
 
+  @origins Application.get_env(:talk, :origins)
+
   socket "/socket", TalkWeb.UserSocket,
     websocket: [
       timeout: 45_000,
-      check_origin: [
-        "//127.0.0.1",
-        "//localhost",
-        "//*.sapien.network",
-        "//sapien-chat.herokuapp.com"
-      ]
+      check_origin: @origins
     ]
 
   # Serve at "/" the static files from "priv/static" directory.
