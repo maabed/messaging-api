@@ -3,11 +3,10 @@ defmodule TalkWeb.Auth do
 
   use Guardian, otp_app: :talk
 
-  alias Talk.Repo
+  alias Talk.Users
   alias Talk.Schemas.User
-  require Logger
 
-  @aud Application.get_env(:talk, :jwt)[:aud]
+  @aud Application.get_env(:talk, :jwt_aud)
 
   def current_user(conn) do
     TalkWeb.Auth.Plug.current_resource(conn)
@@ -18,11 +17,12 @@ defmodule TalkWeb.Auth do
     {:ok, sub}
   end
 
-  def resource_from_claims(claims) do
-    id = claims["sub"]
-    user = Repo.get(User, id)
-    {:ok,  user}
+  def resource_from_claims(%{"sub" => id}) do
+    user = Users.get_user_by_id(id)
+    {:ok, user}
   end
+
+  def resource_from_claims(_), do: {:error, :invalid_claims}
 
   def generate_token(%User{} = user) do
     {:ok, token, _claims} = TalkWeb.Auth.encode_and_sign(user)
@@ -43,7 +43,6 @@ defmodule TalkWeb.Auth do
 
   # Guardian hooks
   def on_verify(claims, _token, _options) do
-    Logger.info("on_verify claims: #{inspect claims}")
     case claims do
       %{"aud" => @aud} -> {:ok, claims}
       _ -> {:error, :invalid_audience}

@@ -1,8 +1,6 @@
 defmodule TalkWeb.Plug.Graphql do
   @moduledoc "A plug for establishing absinthe context."
 
-  @behaviour Plug
-
   alias Talk.Loaders
   alias Talk.Schemas.User
 

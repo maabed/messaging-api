@@ -6,7 +6,8 @@ defmodule TalkWeb.Plug.CurrentUser do
   def init(default), do: default
 
   def call(conn, _default) do
-    user = TalkWeb.Auth.current_user(conn)
-    assign(conn, :user, user)
+    with {:ok, user} <- TalkWeb.Auth.current_user(conn) do
+      assign(conn, :user, user)
+    end
   end
 end
