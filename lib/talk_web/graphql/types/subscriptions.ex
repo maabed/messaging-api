@@ -16,8 +16,6 @@ defmodule TalkWeb.Type.Subscriptions do
       :message_deleted_response,
       :group_bookmarked_response,
       :group_unbookmarked_response,
-      :messages_subscribed_response,
-      :messages_unsubscribed_response,
       :messages_marked_as_read_response,
       :messages_marked_as_unread_response,
       :message_reaction_created_response,
@@ -66,14 +64,6 @@ defmodule TalkWeb.Type.Subscriptions do
 
   object :message_deleted_response do
     field :message, :message
-  end
-
-  object :messages_subscribed_response do
-    field :messages, list_of(:message)
-  end
-
-  object :messages_unsubscribed_response do
-    field :messages, list_of(:message)
   end
 
   object :messages_marked_as_unread_response do

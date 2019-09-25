@@ -55,14 +55,6 @@ defmodule Talk.Events do
     publish_to_many_users(ids, :message_deleted, %{message: message})
   end
 
-  def messages_subscribed(id, messages) do
-    publish_to_user(id, :messages_subscribed, %{messages: messages})
-  end
-
-  def messages_unsubscribed(id, messages) do
-    publish_to_user(id, :messages_unsubscribed, %{messages: messages})
-  end
-
   def messages_marked_as_read(id, messages) do
     publish_to_user(id, :messages_marked_as_read, %{messages: messages})
   end
@@ -95,7 +87,6 @@ defmodule Talk.Events do
   defp publish(payload, topics) do
     Logger.debug "publishing user event topics: #{inspect topics}"
     Logger.debug "publishing user event payload: #{inspect payload}"
-    # @TODO: needs subscriptions and socket to be done first
-    # Absinthe.Subscription.publish(TalkWeb.Endpoint, payload, topics)
+    Absinthe.Subscription.publish(TalkWeb.Endpoint, payload, topics)
   end
 end
