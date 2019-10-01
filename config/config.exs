@@ -3,8 +3,8 @@ use Mix.Config
 config :talk,
   ecto_repos: [Talk.Repo],
   env: Mix.env(),
-  origins: String.split(System.get_env("ORIGINS"), ~r{\s+}, trim: true),
-  jwt_aud: String.split(System.get_env("JWT_AUD"), ~r{\s+}, trim: true)
+  origins: String.split("//127.0.0.1 //localhost //*.sapien.network //sapien-chat.herokuapp.com", ~r{\s+}, trim: true),
+  jwt_aud: String.split("sapien.network  beta.sapien.network  talk.sapien.network  notifier.sapien.network", ~r{\s+}, trim: true)
 
 config :talk, Talk.Repo, migration_timestamps: [type: :utc_datetime_usec]
 
@@ -14,7 +14,7 @@ config :talk, TalkWeb.Endpoint,
   render_errors: [view: TalkWeb.ErrorView, accepts: ~w(json)],
   pubsub: [name: Talk.PubSub, adapter: Phoenix.PubSub.PG2],
   watchers: [],
-  check_origin: String.split(System.get_env("ORIGINS"), ~r{\s+}, trim: true)
+  check_origin: String.split("//127.0.0.1 //localhost //*.sapien.network //sapien-chat.herokuapp.com", ~r{\s+}, trim: true)
 
 config :talk, TalkWeb.Auth,
   issuer: "sapien",
