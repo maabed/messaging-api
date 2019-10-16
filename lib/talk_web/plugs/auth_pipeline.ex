@@ -3,14 +3,12 @@ defmodule TalkWeb.Plug.AuthPipeline do
 
   import Plug.Conn, only: [send_resp: 3]
 
-  @claims %{typ: "access"}
-
   use Guardian.Plug.Pipeline,
     otp_app: :talk,
     module: TalkWeb.Auth,
     error_handler: __MODULE__
 
-  plug Guardian.Plug.VerifyHeader, claims: @claims
+  plug Guardian.Plug.VerifyHeader, realm: "Bearer"
   plug Guardian.Plug.EnsureAuthenticated
   plug Guardian.Plug.LoadResource, allow_blank: true
   plug TalkWeb.Plug.CurrentUser

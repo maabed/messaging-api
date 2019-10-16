@@ -17,8 +17,8 @@ defmodule TalkWeb.Auth do
     {:ok, sub}
   end
 
-  def resource_from_claims(%{"sub" => id}) do
-    user = Users.get_user_by_id(id)
+  def resource_from_claims(%{"sub" => sub}) do
+    user = Users.get_user_by_id(sub)
     {:ok, user}
   end
 
@@ -42,7 +42,7 @@ defmodule TalkWeb.Auth do
   end
 
   # Guardian hooks
-  def on_verify(claims, _token, _options) do
+  def on_verify(claims, token, _options) do
     case claims do
       %{"aud" => @aud} -> {:ok, claims}
       _ -> {:error, :invalid_audience}

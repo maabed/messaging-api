@@ -1,10 +1,13 @@
 use Mix.Config
 
+origins = ["//127.0.0.1", "//localhost", "//*.sapien.network", "//sapien-chat.herokuapp.com"]
+audience = ["sapien.network", "beta.sapien.network", "talk.sapien.network", "notifier.sapien.network"]
+
 config :talk,
   ecto_repos: [Talk.Repo],
   env: Mix.env(),
-  origins: String.split("//127.0.0.1 //localhost //*.sapien.network //sapien-chat.herokuapp.com", ~r{\s+}, trim: true),
-  jwt_aud: String.split("sapien.network  beta.sapien.network  talk.sapien.network  notifier.sapien.network", ~r{\s+}, trim: true)
+  origins: origins,
+  jwt_aud: audience
 
 config :talk, Talk.Repo, migration_timestamps: [type: :utc_datetime_usec]
 
@@ -14,7 +17,7 @@ config :talk, TalkWeb.Endpoint,
   render_errors: [view: TalkWeb.ErrorView, accepts: ~w(json)],
   pubsub: [name: Talk.PubSub, adapter: Phoenix.PubSub.PG2],
   watchers: [],
-  check_origin: String.split("//127.0.0.1 //localhost //*.sapien.network //sapien-chat.herokuapp.com", ~r{\s+}, trim: true)
+  check_origin: origins
 
 config :talk, TalkWeb.Auth,
   issuer: "sapien",

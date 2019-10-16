@@ -18,7 +18,7 @@ defmodule TalkWeb.Router do
   end
 
 
-  scope "/graphql" do
+  scope "/chat-graphql" do
     pipe_through :graphql
 
     forward "/", Absinthe.Plug, schema: TalkWeb.Schema
@@ -32,7 +32,7 @@ defmodule TalkWeb.Router do
         schema: TalkWeb.Schema,
         socket: TalkWeb.UserSocket,
         interface: :playground,
-        default_url: "/graphql"
+        default_url: "/chat-graphql"
     end
   end
 
