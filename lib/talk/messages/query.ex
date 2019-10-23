@@ -137,9 +137,21 @@ defmodule Talk.Messages.Query do
       where: fragment("? <@ ?::citext[]", m.recipient_username, ^usernames)
   end
 
-  @spec where_is_direct(Ecto.Query.t()) :: Ecto.Query.t()
-  def where_is_direct(query) do
-    from [m, u, g] in query,
+  @spec where_type_direct(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_type_direct(query) do
+    from g in query,
+      where: is_nil(g.id)
+  end
+
+  @spec where_type_group(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_type_group(query) do
+    from g in query,
+      where: not is_nil(g.id)
+  end
+
+  @spec where_type_all(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_type_all(query) do
+    from g in query,
       where: is_nil(g.id)
   end
 

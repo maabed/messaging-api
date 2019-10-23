@@ -80,6 +80,7 @@ defmodule TalkWeb.Type.Message do
       arg :last, :integer
       arg :before, :time
       arg :after, :time
+      arg :order_by, :message_order
       arg :filter, :message_filters
       resolve &Resolver.messages/2
     end
@@ -153,7 +154,7 @@ defmodule TalkWeb.Type.Message do
     field :request_state, :request_state_filter, default_value: :all
 
     @desc "Filter by group type."
-    field :type, :type_filter, default_value: :direct
+    field :type, :type_filter, default_value: :all
 
     @desc "Filter by sender."
     field :sender, :string

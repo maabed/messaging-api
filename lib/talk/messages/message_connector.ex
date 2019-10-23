@@ -19,7 +19,7 @@ defmodule Talk.Messages.Connector do
               state: :all,
               last_activity: :all,
               request_state: :all,
-              type: :direct,
+              type: :all,
               recipients: []
             },
             order_by: %{
@@ -162,7 +162,15 @@ defmodule Talk.Messages.Connector do
   defp apply_recipients(base_query, _), do: base_query
 
   defp apply_type(base_query, %{filter: %{type: :direct}}) do
-    Messages.Query.where_is_direct(base_query)
+    Messages.Query.where_type_direct(base_query)
+  end
+
+  defp apply_type(base_query, %{filter: %{type: :group}}) do
+    Messages.Query.where_type_group(base_query)
+  end
+
+  defp apply_type(base_query, %{filter: %{type: :all}}) do
+    base_query
   end
 
   defp apply_type(base_query, _), do: base_query

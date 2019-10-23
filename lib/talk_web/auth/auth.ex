@@ -42,7 +42,7 @@ defmodule TalkWeb.Auth do
   end
 
   # Guardian hooks
-  def on_verify(claims, token, _options) do
+  def on_verify(claims, _token, _options) do
     case claims do
       %{"aud" => @aud} -> {:ok, claims}
       _ -> {:error, :invalid_audience}
