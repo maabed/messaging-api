@@ -58,7 +58,7 @@ defmodule TalkWeb.Plug.Sync do
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
       {:ok, claims} <- Auth.decode_and_verify(token) do
       Logger.debug("verify_token claims: #{inspect claims}")
-      if get_in(claims, ["sub", "email"]) === "bot@sapien.network" do
+      if claims["email"] === "bot@sapien.network" do
         :ok
       else
         {:error, :good_try_dude}
