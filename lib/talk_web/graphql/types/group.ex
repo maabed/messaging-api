@@ -18,15 +18,15 @@ defmodule TalkWeb.Type.Group do
     field :description, :string
     field :state, non_null(:group_state)
     field :is_private, non_null(:boolean)
-    field :inserted_at, non_null(:time)
-    field :updated_at, non_null(:time)
+    field :inserted_at, non_null(:timestamp)
+    field :updated_at, non_null(:timestamp)
     field :user, non_null(:user), resolve: dataloader(:db)
 
     field :messages, non_null(:message_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :time
-      arg :after, :time
+      arg :before, :cursor
+      arg :after, :cursor
       arg :filter, :message_filters
       resolve &MessageResolver.messages/3
     end

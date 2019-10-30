@@ -14,8 +14,8 @@ defmodule TalkWeb.Type.User do
     field :email, non_null(:string)
     field :username, non_null(:string)
     field :profile_id, non_null(:string)
-    field :inserted_at, non_null(:time)
-    field :updated_at, non_null(:time)
+    field :inserted_at, non_null(:timestamp)
+    field :updated_at, non_null(:timestamp)
 
     field :users, non_null(:user_pagination) do
       arg :first, :integer

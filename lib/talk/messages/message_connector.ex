@@ -30,8 +30,8 @@ defmodule Talk.Messages.Connector do
   @type t :: %__MODULE__{
           first: integer() | nil,
           last: integer() | nil,
-          before: integer() | nil,
-          after: integer() | nil,
+          before: String.t() | nil,
+          after: String.t() | nil,
           filter: %{
             subscribe_state: :subscribed | :subscribed | :all,
             read_state: :read | :unread | :all,

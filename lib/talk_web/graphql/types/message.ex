@@ -17,8 +17,8 @@ defmodule TalkWeb.Type.Message do
     field :sender, non_null(:user), resolve: &Resolver.message_sender/3
     field :is_request, non_null(:boolean)
     field :recipients, list_of(:user), resolve: dataloader(:db)
-    field :updated_at, non_null(:time)
-    field :inserted_at, non_null(:time)
+    field :updated_at, non_null(:timestamp)
+    field :inserted_at, non_null(:timestamp)
 
     field :reactions, non_null(:message_reaction_pagination) do
       arg :first, :integer
@@ -33,7 +33,7 @@ defmodule TalkWeb.Type.Message do
       resolve &Resolver.can_edit_message/3
     end
 
-    field :last_activity_at, non_null(:time) do
+    field :last_activity_at, non_null(:timestamp) do
       resolve fn
         %Message{last_activity_at: last_activity_at}, _, _ when not is_nil(last_activity_at) ->
           {:ok, last_activity_at}
@@ -78,8 +78,8 @@ defmodule TalkWeb.Type.Message do
     field :messages, non_null(:message_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :time
-      arg :after, :time
+      arg :before, :cursor
+      arg :after, :cursor
       arg :order_by, :message_order
       arg :filter, :message_filters
       resolve &Resolver.messages/2

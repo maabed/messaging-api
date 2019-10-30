@@ -31,9 +31,9 @@ defmodule TalkWeb.Type.Custom do
     serialize &Timex.format!(&1, "{ISO:Extended}")
   end
 
-  @desc "Unix timestamp in microseconds"
+  @desc "Unix timestamp in seconds"
   scalar :timestamp do
-    parse &Timex.from_unix(&1.value, :microsecond)
-    serialize fn time -> DateTime.to_unix(Timex.to_datetime(time), :microsecond) end
+    parse &Timex.from_unix(&1.value, :second)
+    serialize fn time -> DateTime.to_unix(Timex.to_datetime(time), :second) end
   end
 end
