@@ -120,6 +120,7 @@ defmodule TalkWeb.Type.Group do
     field :group, :group do
       arg :id, :id
       arg :name, :string
+      arg :recipient_ids, list_of(:id)
       resolve &GroupResolver.group/2
     end
 
@@ -140,6 +141,7 @@ defmodule TalkWeb.Type.Group do
       arg :name, non_null(:string)
       arg :description, :string
       arg :is_private, :boolean, default_value: true
+      arg :recipient_ids, list_of(:id)
       resolve &GroupResolver.create_group/2
     end
 

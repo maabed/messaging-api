@@ -29,7 +29,11 @@ defmodule TalkWeb.Resolver.Groups do
     Groups.get_group_by_name(user, name)
   end
 
-  def group(_args, _), do: {:error, "You must provide an `id` or `name`."}
+  def group(%{recipient_ids: recipient_ids} = _args, %{context: %{user: user}}) do
+    Groups.get_group_by_recipients(user, recipient_ids)
+  end
+
+  def group(_args, _), do: {:error, "You must provide an `id`, `name` or `recipient ids`."}
 
   @spec groups(map(), info()) :: paginated_result()
   def groups(args, %{context: %{user: _user}} = info) do
@@ -48,11 +52,20 @@ defmodule TalkWeb.Resolver.Groups do
 
   @spec create_group(map(), info()) :: group_mutation_result()
   def create_group(args, %{context: %{user: user}}) do
-    with {:ok, %{group: group}} <- Groups.create_group(user, args) do
+    with {:ok, false} <- Groups.group_exists?(user, args.recipient_ids),
+         {:ok, %{group: group}} <- Groups.create_group(user, args) do
       {:ok, %{success: true, group: group, errors: []}}
     else
       {:error, changeset} ->
         %{success: false, group: nil, errors: Helpers.format_errors(changeset)}
+
+      {:ok, true} ->
+        with {:ok, [group]} = Groups.get_group_by_recipients(user, args.recipient_ids) do
+          {:ok, %{success: true, group: group, errors: []}}
+        end
+
+      err ->
+        err
     end
   end
 

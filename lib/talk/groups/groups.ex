@@ -39,7 +39,7 @@ defmodule Talk.Groups do
         {:ok, group}
 
       _ ->
-        {:error, "Group not found"}
+        nil
     end
   end
 
@@ -54,9 +54,66 @@ defmodule Talk.Groups do
         {:ok, group}
 
       _ ->
-        {:error, "Group not found"}
+        nil
     end
   end
+
+  @spec get_group_by_recipients(User.t(), [String.t()]) :: {:ok, Group.t()} | {:error, String.t()}
+  def get_group_by_recipients(%User{} = user, recipient_ids) do
+    case group_exists?(user, recipient_ids) do
+      {:ok, true} ->
+        ids = Enum.uniq([user.id | recipient_ids])
+
+        query =
+          from [g, gu] in groups_base_query(user),
+            join: gu2 in GroupUser,
+            on: gu.id != gu2.id and gu.group_id == gu2.group_id,
+            where: gu.user_id in ^ids,
+            distinct: true
+
+        {:ok, Repo.all(query)}
+
+      _ ->
+        nil
+    end
+  end
+
+  @spec group_exists?(User.t(), [String.t()]) :: {:ok, boolean()} | {:error, String.t()}
+  def group_exists?(%User{} = user, recipient_ids) do
+    ids = Enum.uniq([user.id | recipient_ids])
+
+    sub_query =
+      from [g, gu] in groups_base_query(user),
+        group_by: gu.group_id,
+        having: count(0) > 1,
+        select: gu.group_id
+
+    query =
+      from gu2 in GroupUser,
+        join: gu in subquery(sub_query),
+        on: gu2.group_id == gu.group_id,
+        where: gu2.user_id in ^ids
+
+    groups = Repo.all(query)
+    Logger.warn("groups #{inspect groups}")
+    {:ok, length(groups) >= 2}
+
+    # sub_query =
+    #   from g in groups_base_query(user),
+    #     join: gu2 in GroupUser,
+    #     group_by: gu2.group_id,
+    #     having: count(0) > 1,
+    #     select: gu2.group_id
+    # query =
+    #   from gu in GroupUser,
+    #     join: gu2 in subquery(sub_query),
+    #     on: gu2.group_id == gu.group_id,
+    #     where: gu.user_id in ^ids,
+    #     distinct: gu.user_id,
+    #     select: gu.user_id
+  end
+
+  def group_exists?(nil), do: {:ok, false}
 
   @spec get_group_user(Group.t(), User.t()) :: {:ok, GroupUser.t() | nil}
   def get_group_user(%Group{id: group_id}, %User{id: user_id}) do
@@ -70,17 +127,38 @@ defmodule Talk.Groups do
 
   @spec create_group(User.t(), map()) :: {:ok, %{group: Group.t()}} | {:error, Changeset.t()}
   def create_group(user, params \\ %{}) do
-    params_with_relations = params |> Map.put(:user_id, user.id)
+    Logger.warn("create_group params before #{inspect params}")
+    recipient_ids = Map.get(params, :recipient_ids)
+
+    Logger.warn("create_group recipient_ids #{inspect recipient_ids}")
+
+    params = params |> Map.delete("recipient_ids")
+
+    Logger.warn("create_group params after #{inspect params}")
+
+    params_with_relations =
+      params
+      |> Map.put(:user_id, user.id)
+
+    Logger.warn("create_group params_with_relations #{inspect params_with_relations}")
 
     %Group{}
     |> Group.create_changeset(params_with_relations)
     |> Repo.insert()
-    |> after_create_group(user)
+    |> after_create_group(user, recipient_ids)
   end
 
-  defp after_create_group({:ok, group}, user) do
-    subscribe(group, user)
+  defp after_create_group({:ok, group}, user, recipient_ids) do
     set_owner_role(group, user)
+    query =
+      from u in User,
+        where: u.id in ^recipient_ids
+
+    recipients = Repo.all(query)
+    Logger.warn("after_create_group recipients #{inspect recipients}")
+    Enum.each(recipients, fn recipient ->
+      subscribe(group, recipient)
+    end)
 
     {:ok, accessor_ids} = get_accessor_ids(group)
     _ = Events.group_created(accessor_ids, group)
@@ -88,7 +166,7 @@ defmodule Talk.Groups do
     {:ok, %{group: group}}
   end
 
-  defp after_create_group(err, _), do: err
+  defp after_create_group(err, _, _), do: err
 
   @spec update_group(Group.t(), map()) :: {:ok, Group.t()} | {:error, Changeset.t()}
   def update_group(group, params) do
