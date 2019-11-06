@@ -175,6 +175,20 @@ defmodule TalkWeb.Resolver.Groups do
     end
   end
 
+  @spec mute_group(map(), info()) :: group_mutation_result()
+  def mute_group(args, %{context: %{user: user}}) do
+    with {:ok, group} <- Groups.get_group(user, args.group_id),
+         :ok <- Groups.mute(group, user) do
+      {:ok, %{success: true, group: group, errors: []}}
+    else
+      {:error, %Changeset{} = changeset} ->
+        {:ok, %{success: false, group: nil, errors: Helpers.format_errors(changeset)}}
+
+      err ->
+        err
+    end
+  end
+
   @spec privatize_group(map(), info()) :: group_mutation_result()
   def privatize_group(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
