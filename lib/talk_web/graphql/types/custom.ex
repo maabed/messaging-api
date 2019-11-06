@@ -33,7 +33,7 @@ defmodule TalkWeb.Type.Custom do
 
   @desc "Unix timestamp in seconds"
   scalar :timestamp do
-    parse &Timex.from_unix(&1.value, :second)
-    serialize fn time -> DateTime.to_unix(Timex.to_datetime(time), :second) end
+    parse(fn %{value: value} -> {:ok, Timex.from_unix(value, :second)} end)
+    serialize(fn time -> DateTime.to_unix(Timex.to_datetime(time), :second) end)
   end
 end

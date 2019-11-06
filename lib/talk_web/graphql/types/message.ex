@@ -23,8 +23,8 @@ defmodule TalkWeb.Type.Message do
     field :reactions, non_null(:message_reaction_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :cursor
-      arg :after, :cursor
+      arg :before, :timestamp
+      arg :after, :timestamp
       arg :order_by, :reaction_order
       resolve &Resolver.reactions/3
     end
@@ -78,8 +78,8 @@ defmodule TalkWeb.Type.Message do
     field :messages, non_null(:message_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :cursor
-      arg :after, :cursor
+      arg :before, :timestamp
+      arg :after, :timestamp
       arg :order_by, :message_order
       arg :filter, :message_filters
       resolve &Resolver.messages/2

@@ -6,10 +6,10 @@ defmodule TalkWeb.Type.Paginator do
   @desc "Data for pagination."
   object :page_info do
     @desc "The cursor correspodning to the first node."
-    field :start_cursor, :cursor
+    field :start_cursor, :timestamp
 
     @desc "The cursor corresponding to the last node."
-    field :end_cursor, :cursor
+    field :end_cursor, :timestamp
 
     @desc "A boolean indicating whether there are more items going forward."
     field :has_next_page, non_null(:boolean)
@@ -24,7 +24,7 @@ defmodule TalkWeb.Type.Paginator do
     field :node, :user
 
     @desc "A cursor for use in pagination."
-    field :cursor, non_null(:cursor)
+    field :cursor, non_null(:timestamp)
   end
 
   @desc "A list of users"
@@ -42,7 +42,7 @@ defmodule TalkWeb.Type.Paginator do
   @desc "group edge."
   object :group_edge do
     field :node, :group
-    field :cursor, non_null(:cursor)
+    field :cursor, non_null(:timestamp)
   end
 
   @desc "A list of groups"
@@ -55,7 +55,7 @@ defmodule TalkWeb.Type.Paginator do
   @desc "group users edge."
   object :group_user_edge do
     field :node, :group_user
-    field :cursor, non_null(:cursor)
+    field :cursor, non_null(:timestamp)
   end
 
   object :group_user_pagination do
@@ -67,7 +67,7 @@ defmodule TalkWeb.Type.Paginator do
   @desc "message edge."
   object :message_edge do
     field :node, :message
-    field :cursor, non_null(:cursor)
+    field :cursor, non_null(:timestamp)
   end
 
   object :message_pagination do
@@ -79,7 +79,7 @@ defmodule TalkWeb.Type.Paginator do
   @desc "reactions edge."
   object :message_reaction_edge do
     field :node, :message_reaction
-    field :cursor, non_null(:cursor)
+    field :cursor, non_null(:timestamp)
   end
 
   object :message_reaction_pagination do

@@ -25,17 +25,18 @@ defmodule TalkWeb.Type.Group do
     field :messages, non_null(:message_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :cursor
-      arg :after, :cursor
+      arg :before, :timestamp
+      arg :after, :timestamp
       arg :filter, :message_filters
+      arg :order_by, :message_order
       resolve &MessageResolver.messages/3
     end
 
     field :group_users, non_null(:group_user_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :cursor
-      arg :after, :cursor
+      arg :before, :timestamp
+      arg :after, :timestamp
       arg :order_by, :user_order
       resolve &GroupResolver.group_users/3
     end
@@ -125,8 +126,8 @@ defmodule TalkWeb.Type.Group do
     field :groups, non_null(:group_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :cursor
-      arg :after, :cursor
+      arg :before, :timestamp
+      arg :after, :timestamp
       arg :order_by, :group_order
       arg :state, :group_state_filter, default_value: :open
       resolve &GroupResolver.groups/2

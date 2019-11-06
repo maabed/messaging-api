@@ -20,8 +20,8 @@ defmodule TalkWeb.Type.User do
     field :users, non_null(:user_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :cursor
-      arg :after, :cursor
+      arg :before, :timestamp
+      arg :after, :timestamp
       arg :order_by, :user_order
       resolve &UserResolver.users/3
     end
@@ -29,8 +29,8 @@ defmodule TalkWeb.Type.User do
     field :group_users, non_null(:group_user_pagination) do
       arg :first, :integer
       arg :last, :integer
-      arg :before, :cursor
-      arg :after, :cursor
+      arg :before, :timestamp
+      arg :after, :timestamp
       arg :order_by, :group_order
       resolve &GroupResolver.group_users/3
     end
