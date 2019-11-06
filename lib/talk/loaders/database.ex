@@ -5,7 +5,7 @@ defmodule Talk.Loaders.Database do
 
   alias Talk.Repo
   alias Talk.{Groups, Messages, Users}
-  alias Talk.Schemas.{File, Group, GroupUser, Message, MessageUser, MessageReaction, User}
+  alias Talk.Schemas.{File, Group, GroupUser, Message, MessageReaction, User}
 
   def source(%{user: _user} = params) do
     Dataloader.Ecto.new(Repo, query: &query/2, default_params: params)
@@ -13,7 +13,6 @@ defmodule Talk.Loaders.Database do
 
   def source(_), do: raise("unauthorized")
 
-  # def query(User, %{user: _user}), do: User
   def query(User, %{user: user}), do: Users.users_base_query(user)
 
   def query(Group, %{user: user}), do: Groups.groups_base_query(user)
@@ -21,8 +20,6 @@ defmodule Talk.Loaders.Database do
   def query(GroupUser, %{user: _user}), do: GroupUser
 
   def query(Message, %{user: user}), do: Messages.messages_base_query(user)
-
-  def query(MessageUser, %{user: _user}), do: MessageUser
 
   def query(MessageReaction, _), do: MessageReaction
 

@@ -8,7 +8,7 @@ defmodule Talk.Schemas.User do
 
   alias Talk.Utils
   alias Ecto.Changeset
-  alias Talk.Schemas.{Follower, BlockedProfile, Group, GroupUser, Message, MessageUser}
+  alias Talk.Schemas.{Follower, BlockedProfile, Group, GroupUser, Message}
 
   @type t :: %__MODULE__{}
   @primary_key {:id, :string, autogenerate: false}
@@ -26,7 +26,7 @@ defmodule Talk.Schemas.User do
     has_many :groups, Group
     has_many :messages, Message
     has_many :group_users, GroupUser
-    has_many :message_users, MessageUser
+
     many_to_many(
       :followers,
       __MODULE__,

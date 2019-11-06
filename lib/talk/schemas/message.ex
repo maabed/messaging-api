@@ -5,7 +5,7 @@ defmodule Talk.Schemas.Message do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Talk.Schemas.{Group, MessageGroup, MessageFile, MessageUser, MessageReaction, User}
+  alias Talk.Schemas.{Group, MessageGroup, MessageFile, MessageReaction, User}
 
   @type t :: %__MODULE__{}
   @timestamps_opts [type: :utc_datetime_usec]
@@ -19,8 +19,8 @@ defmodule Talk.Schemas.Message do
     field :last_activity_at, :utc_datetime, virtual: true
 
     belongs_to :user, User, type: :string
-    has_many :message_users, MessageUser
-    has_many :recipients, through: [:message_users, :user]
+    has_many :message_groups, MessageGroup
+    has_many :recipients, through: [:message_groups, :user]
     has_many :message_files, MessageFile
     has_many :message_reactions, MessageReaction
     has_many :files, through: [:message_files, :file]

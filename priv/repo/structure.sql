@@ -80,6 +80,16 @@ CREATE TYPE public.log_event AS ENUM (
 
 
 --
+-- Name: message_read_state; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.message_read_state AS ENUM (
+    'READ',
+    'UNREAD'
+);
+
+
+--
 -- Name: message_state; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -100,16 +110,6 @@ CREATE TYPE public.message_type AS ENUM (
     'VIDEO',
     'IMAGE',
     'DRAWING'
-);
-
-
---
--- Name: message_user_state; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.message_user_state AS ENUM (
-    'READ',
-    'UNREAD'
 );
 
 
@@ -287,7 +287,9 @@ CREATE TABLE public.message_groups (
     message_id bigint NOT NULL,
     group_id bigint NOT NULL,
     inserted_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    read_state public.message_read_state DEFAULT 'UNREAD'::public.message_read_state NOT NULL,
+    user_id character varying(255) NOT NULL
 );
 
 
@@ -340,40 +342,6 @@ CREATE SEQUENCE public.message_reactions_id_seq
 --
 
 ALTER SEQUENCE public.message_reactions_id_seq OWNED BY public.message_reactions.id;
-
-
---
--- Name: message_users; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.message_users (
-    id bigint NOT NULL,
-    state public.message_user_state DEFAULT 'UNREAD'::public.message_user_state NOT NULL,
-    group_id bigint,
-    message_id bigint NOT NULL,
-    user_id character varying(255) NOT NULL,
-    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: message_users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.message_users_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: message_users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.message_users_id_seq OWNED BY public.message_users.id;
 
 
 --
@@ -513,13 +481,6 @@ ALTER TABLE ONLY public.message_reactions ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
--- Name: message_users id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.message_users ALTER COLUMN id SET DEFAULT nextval('public.message_users_id_seq'::regclass);
-
-
---
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -595,14 +556,6 @@ ALTER TABLE ONLY public.message_groups
 
 ALTER TABLE ONLY public.message_reactions
     ADD CONSTRAINT message_reactions_pkey PRIMARY KEY (id);
-
-
---
--- Name: message_users message_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.message_users
-    ADD CONSTRAINT message_users_pkey PRIMARY KEY (id);
 
 
 --
@@ -684,20 +637,6 @@ CREATE UNIQUE INDEX message_groups_message_id_group_id_index ON public.message_g
 --
 
 CREATE UNIQUE INDEX message_reactions_message_id_value_index ON public.message_reactions USING btree (message_id, value);
-
-
---
--- Name: message_users_message_id_group_id_user_id_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX message_users_message_id_group_id_user_id_index ON public.message_users USING btree (message_id, group_id, user_id);
-
-
---
--- Name: message_users_message_id_user_id_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX message_users_message_id_user_id_index ON public.message_users USING btree (message_id, user_id);
 
 
 --
@@ -825,35 +764,19 @@ ALTER TABLE ONLY public.message_groups
 
 
 --
+-- Name: message_groups message_groups_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_groups
+    ADD CONSTRAINT message_groups_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: message_reactions message_reactions_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.message_reactions
     ADD CONSTRAINT message_reactions_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages(id);
-
-
---
--- Name: message_users message_users_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.message_users
-    ADD CONSTRAINT message_users_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups(id);
-
-
---
--- Name: message_users message_users_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.message_users
-    ADD CONSTRAINT message_users_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages(id);
-
-
---
--- Name: message_users message_users_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.message_users
-    ADD CONSTRAINT message_users_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -884,5 +807,5 @@ ALTER TABLE ONLY public.user_log
 -- PostgreSQL database dump complete
 --
 
-INSERT INTO public."schema_migrations" (version) VALUES (20190718000001), (20190718002331), (20190718002847), (20190718003511), (20190718004032), (20190724221745), (20190731150948), (20190731151100), (20190806051809), (20190807090748), (20190811203434), (20190916195655), (20190916195840);
+INSERT INTO public."schema_migrations" (version) VALUES (20190718000001), (20190718002331), (20190718002847), (20190718003511), (20190718004032), (20190724221745), (20190731150948), (20190731151100), (20190806051809), (20190807090748), (20190811203434), (20190916195655), (20190916195840), (20191030194412);
 

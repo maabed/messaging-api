@@ -15,7 +15,7 @@ defmodule Talk.Messages.CreateMessage do
   def perform(%User{} = user, %Group{} = group, params) do
     Multi.new()
     |> insert_message(user, params)
-    |> set_group(group)
+    |> set_group(group, user)
     |> attach_files(user, params)
     |> log(user)
     |> Repo.transaction()
@@ -39,11 +39,12 @@ defmodule Talk.Messages.CreateMessage do
     Multi.insert(multi, :message, Message.create_changeset(%Message{}, params_with_relations))
   end
 
-  defp set_group(multi, group) do
+  defp set_group(multi, group, user) do
     Multi.run(multi, :groups, fn _repo, %{message: message} ->
       params = %{
         message_id: message.id,
-        group_id: group.id
+        group_id: group.id,
+        user_id: user.id
       }
 
       %MessageGroup{}

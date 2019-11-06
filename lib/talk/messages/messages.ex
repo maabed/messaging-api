@@ -15,7 +15,6 @@ defmodule Talk.Messages do
     Message,
     MessageFile,
     MessageGroup,
-    MessageUser,
     MessageReaction,
     UserLog,
     User
@@ -58,21 +57,21 @@ defmodule Talk.Messages do
     {:ok, messages}
   end
 
-  @spec get_subscribers(Message.t()) :: {:ok, [User.t()]}
-  def get_subscribers(%Message{id: message_id}) do
-    query =
-      from u in User,
-        join: mu in assoc(u, :message_users),
-        on: mu.message_id == ^message_id and mu.state == "SUBSCRIBED"
+  # @spec get_subscribers(Message.t()) :: {:ok, [User.t()]}
+  # def get_subscribers(%Message{id: message_id}) do
+  #   query =
+  #     from u in User,
+  #       join: mu in assoc(u, :message_users),
+  #       on: mu.message_id == ^message_id and mu.state == "SUBSCRIBED"
 
-    query
-    |> Repo.all()
-    |> handle_get_subscribers()
-  end
+  #   query
+  #   |> Repo.all()
+  #   |> handle_get_subscribers()
+  # end
 
-  defp handle_get_subscribers(subscribers) do
-    {:ok, subscribers}
-  end
+  # defp handle_get_subscribers(subscribers) do
+  #   {:ok, subscribers}
+  # end
 
   @spec create_message(User.t(), map()) :: create_message_result()
   def create_message(user, params) do
@@ -138,16 +137,16 @@ defmodule Talk.Messages do
     result
   end
 
-  @spec get_user_state(Message.t(), User.t()) :: %{state: String.t()}
-  def get_user_state(%Message{id: message_id}, %User{id: user_id}) do
-    case Repo.get_by(MessageUser, %{message_id: message_id, user_id: user_id}) do
-      %MessageUser{state: state} ->
-        %{state: state}
+  # @spec get_user_state(Message.t(), User.t()) :: %{state: String.t()}
+  # def get_user_state(%Message{id: message_id}, %User{id: user_id}) do
+  #   case Repo.get_by(MessageUser, %{message_id: message_id, user_id: user_id}) do
+  #     %MessageUser{state: state} ->
+  #       %{state: state}
 
-      _ ->
-        %{state: "UNSUBSCRIBED"}
-    end
-  end
+  #     _ ->
+  #       %{state: "UNSUBSCRIBED"}
+  #   end
+  # end
 
   def can_access_message?(user, message_id) do
     case Messages.get_message(user, message_id) do
@@ -206,12 +205,10 @@ defmodule Talk.Messages do
         {:ok, true} ->
           from u in User,
             left_join: mg in MessageGroup,
-            on: mg.message_id == ^message_id,
-            left_join: mu in MessageUser,
-            on: mu.user_id == u.id and mu.message_id == ^message_id,
+            on: mg.message_id == ^message_id and mg.user_id == u.id,
             left_join: gu in GroupUser,
-            on: gu.group_id == mu.group_id and gu.user_id == u.id,
-            where: not is_nil(mu.id),
+            on: gu.group_id == mg.group_id and gu.user_id == u.id,
+            where: not is_nil(gu.id),
             distinct: u.id,
             select: u.id
 
@@ -315,7 +312,7 @@ defmodule Talk.Messages do
       |> Map.put(:message_id, message.id)
       |> Map.put(:user_id, user.id)
 
-    %MessageUser{}
+    %MessageGroup{}
     |> Changeset.change(full_params)
     |> Repo.insert(
       on_conflict: :replace_all,
