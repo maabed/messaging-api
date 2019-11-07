@@ -121,6 +121,12 @@ defmodule TalkWeb.Type.Group do
     interface :response
   end
 
+  object :archive_group_response do
+    field :success, non_null(:boolean)
+    field :errors, list_of(:error)
+    interface :response
+  end
+
   @desc "group queries"
   object :group_queries do
     field :group, :group do
@@ -201,6 +207,11 @@ defmodule TalkWeb.Type.Group do
     field :unsubscribe_from_group, type: :unsubscribe_from_group_response do
       arg :group_id, non_null(:id)
       resolve &GroupResolver.unsubscribe_from_group/2
+    end
+
+    field :archive_group, type: :archive_group_response do
+      arg :group_id, non_null(:id)
+      resolve &GroupResolver.archive_group/2
     end
 
     field :mute_group, type: :mute_group_response do
