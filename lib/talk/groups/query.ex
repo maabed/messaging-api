@@ -9,7 +9,7 @@ defmodule Talk.Groups.Query do
   def base_query(%User{id: user_id} = _user) do
     from g in Group,
       left_join: gu in GroupUser,
-      on: gu.group_id == g.id,
+      on: gu.group_id == g.id and gu.user_id == ^user_id,
       join: u in User,
       on: u.id == ^user_id,
       where: g.state != "DELETED"

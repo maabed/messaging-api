@@ -50,7 +50,8 @@ defmodule Talk.Groups do
   def get_group_by_name(%User{} = user, name) do
     query =
       from g in groups_base_query(user),
-        where: g.name == ^name
+        where: g.name == ^name,
+        limit: 1
 
     case Repo.one(query) do
       %Group{} = group ->
