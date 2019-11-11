@@ -42,7 +42,7 @@ defmodule Talk.Groups do
         {:ok, group}
 
       _ ->
-        nil
+        {:error, nil}
     end
   end
 
@@ -58,7 +58,7 @@ defmodule Talk.Groups do
         {:ok, group}
 
       _ ->
-        nil
+        {:error, nil}
     end
   end
 
@@ -73,7 +73,7 @@ defmodule Talk.Groups do
           {:ok, group}
 
         _ ->
-          nil
+          {:error, nil}
       end
   end
 
