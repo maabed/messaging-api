@@ -52,17 +52,17 @@ defmodule TalkWeb.Resolver.Groups do
 
   @spec create_group(map(), info()) :: group_mutation_result()
   def create_group(args, %{context: %{user: user}}) do
-    with {:ok, false} <- Groups.group_exists?(user, args.recipient_ids),
+    with {:ok, false, _} <- Groups.group_exists?(user, args.recipient_ids),
          {:ok, %{group: group}} <- Groups.create_group(user, args) do
       {:ok, %{success: true, group: group, errors: []}}
     else
-      {:error, changeset} ->
+      {:error, :invalid_recipients} -> {:error, "invalid recipients"}
+
+      {:error, %Changeset{} = changeset} ->
         %{success: false, group: nil, errors: Helpers.format_errors(changeset)}
 
-      {:ok, true} ->
-        with {:ok, [group]} = Groups.get_group_by_recipients(user, args.recipient_ids) do
-          {:ok, %{success: true, group: group, errors: []}}
-        end
+      {:ok, true, group} ->
+        {:ok, %{success: true, group: List.first(group), errors: []}}
 
       err ->
         err

@@ -22,4 +22,33 @@ defmodule Talk.Groups.Query do
       where: gu.group_id == ^group_id,
       select: %{gu | username: u.username}
   end
+
+  @spec recipients_base_query(User.t(), [String.t()]) :: Ecto.Query.t()
+  def recipients_base_query(%User{} = user, recipient_ids) do
+    ids =
+      recipient_ids
+      |> Enum.uniq()
+      |> Enum.take(1) # change when add support for groups > 2 users
+
+    from [g, gu] in base_query(user),
+      join: gu2 in GroupUser,
+      on: gu.id != gu2.id and gu.group_id == gu2.group_id,
+      where: gu.user_id == ^user.id,
+      where: gu2.user_id in ^ids,
+      distinct: true
+
+    # sub_query =
+    #   from g in groups_base_query(user),
+    #     join: gu2 in GroupUser,
+    #     group_by: gu2.group_id,
+    #     having: count(0) > 1,
+    #     select: gu2.group_id
+    # query =
+    #   from gu in GroupUser,
+    #     join: gu2 in subquery(sub_query),
+    #     on: gu2.group_id == gu.group_id,
+    #     where: gu.user_id in ^ids,
+    #     distinct: gu.user_id,
+    #     select: gu.user_id
+  end
 end

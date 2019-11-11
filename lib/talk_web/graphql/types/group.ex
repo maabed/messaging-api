@@ -150,10 +150,10 @@ defmodule TalkWeb.Type.Group do
   @desc "group mutations"
   object :group_mutations do
     field :create_group, type: :group_mutation_response do
-      arg :name, non_null(:string)
+      arg :name, :string
       arg :description, :string
       arg :is_private, :boolean, default_value: true
-      arg :recipient_ids, list_of(:id)
+      arg :recipient_ids, non_null(list_of(:id))
       resolve &GroupResolver.create_group/2
     end
 
