@@ -100,6 +100,7 @@ defmodule TalkWeb.Type.Message do
     field :update_message, type: :message_mutation_response do
       arg :message_id, non_null(:id)
       arg :body, :string
+      arg :is_request, :boolean
       resolve &Resolver.update_message/2
     end
 

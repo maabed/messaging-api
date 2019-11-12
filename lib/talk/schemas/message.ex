@@ -37,7 +37,7 @@ defmodule Talk.Schemas.Message do
 
   def update_changeset(struct, attrs \\ %{}) do
     struct
-    |> cast(attrs, [:body])
-    |> validate_required([:body])
+    |> cast(attrs, [:body, :is_request])
+    |> validate_required([:body, :is_request])
   end
 end
