@@ -19,18 +19,18 @@ defmodule Talk.Messages.CreateMessage do
     |> attach_files(user, params)
     |> log(user)
     |> Repo.transaction()
-    |> after_insert_message(user, params)
+    |> after_insert_message(user, group, params)
   end
 
-  @spec perform(User.t(), map()) :: result()
-  def perform(%User{} = user, params) do
-    Multi.new()
-    |> insert_message(user, params)
-    |> attach_files(user, params)
-    |> log(user)
-    |> Repo.transaction()
-    |> after_insert_message(user, params)
-  end
+  # @spec perform(User.t(), map()) :: result()
+  # def perform(%User{} = user, params) do
+  #   Multi.new()
+  #   |> insert_message(user, params)
+  #   |> attach_files(user, params)
+  #   |> log(user)
+  #   |> Repo.transaction()
+  #   |> after_insert_message(user, params)
+  # end
 
   defp insert_message(multi, %User{} = user, params) do
     params_with_relations =
@@ -72,19 +72,19 @@ defmodule Talk.Messages.CreateMessage do
     end)
   end
 
-  defp after_insert_message({:ok, %{message: message} = result}, user, params) do
+  defp after_insert_message({:ok, %{message: message} = result}, group, user, params) do
     # Messages.subscribe(user, [message])
-    subscribe_recipients(message, user, params)
+    subscribe_recipients(message, user, group, params)
     send_events(message)
 
     {:ok, result}
   end
 
-  defp after_insert_message(err, _, _), do: err
+  defp after_insert_message(err, _, _, _), do: err
 
-  defp subscribe_recipients(_message, _user, %{recipient_ids: []}), do: nil
+  defp subscribe_recipients(_message, _group, _user, %{recipient_ids: []}), do: nil
 
-  defp subscribe_recipients(message, _user, %{recipient_ids: ids}) do
+  defp subscribe_recipients(message, group, _user, %{recipient_ids: ids}) do
     query =
       from u in User,
         where: u.id in ^ids
@@ -92,11 +92,11 @@ defmodule Talk.Messages.CreateMessage do
     recipients = Repo.all(query)
 
     Enum.each(recipients, fn recipient ->
-      Messages.mark_as_unread(recipient, [message])
+      Messages.mark_as_unread(recipient, group, [message])
     end)
   end
 
-  defp subscribe_recipients(_message, _user, _params), do: nil
+  defp subscribe_recipients(_message, _group, _user, _params), do: nil
 
   defp send_events(message) do
     {:ok, user_ids} = Messages.get_accessor_ids(message)

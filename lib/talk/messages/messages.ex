@@ -41,7 +41,7 @@ defmodule Talk.Messages do
   end
 
   defp handle_message_query(_) do
-    {:error, "message not found"}
+    {:error, nil}
   end
 
   @spec get_messages(User.t(), [String.t()]) :: {:ok, [Message.t()]} | no_return()
@@ -73,10 +73,10 @@ defmodule Talk.Messages do
   #   {:ok, subscribers}
   # end
 
-  @spec create_message(User.t(), map()) :: create_message_result()
-  def create_message(user, params) do
-    CreateMessage.perform(user, params)
-  end
+  # @spec create_message(User.t(), map()) :: create_message_result()
+  # def create_message(user, params) do
+  #   CreateMessage.perform(user, params)
+  # end
 
   @spec create_message(User.t(), Group.t() | User.t(), map()) :: create_message_result()
   def create_message(user, recipient, params) do
@@ -105,10 +105,10 @@ defmodule Talk.Messages do
     result
   end
 
-  @spec mark_as_unread(User.t(), [Message.t()]) :: {:ok, [Message.t()]}
-  def mark_as_unread(%User{} = user, messages) do
+  @spec mark_as_unread(User.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}
+  def mark_as_unread(%User{} = user, group, messages) do
     user
-    |> update_users_read_states(messages, %{state: "UNREAD"})
+    |> update_users_read_states(group, messages, %{read_state: "UNREAD"})
     |> after_mark_as_unread(user)
   end
 
@@ -121,10 +121,10 @@ defmodule Talk.Messages do
     result
   end
 
-  @spec mark_as_read(User.t(), [Message.t()]) :: {:ok, [Message.t()]}
-  def mark_as_read(%User{} = user, messages) do
+  @spec mark_as_read(User.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}
+  def mark_as_read(%User{} = user, group, messages) do
     user
-    |> update_users_read_states(messages, %{state: "READ"})
+    |> update_users_read_states(group, messages, %{read_state: "READ"})
     |> after_mark_as_read(user)
   end
 
@@ -285,7 +285,7 @@ defmodule Talk.Messages do
         |> after_delete_message_reaction(user, message)
 
       _ ->
-        {:error, "Reaction not found"}
+        {:error, nil}
     end
   end
 
@@ -297,26 +297,27 @@ defmodule Talk.Messages do
 
   defp after_delete_message_reaction(err, _, _), do: err
 
-  defp update_users_read_states(user, messages, params) do
+  defp update_users_read_states(user, group, messages, params) do
     updated_messages =
       Enum.filter(messages, fn msg ->
-        :ok == update_user_state(user, msg, params)
+        :ok == update_user_state(user, group, msg, params)
       end)
 
     {:ok, updated_messages}
   end
 
-  defp update_user_state(user, message, params) do
+  defp update_user_state(user, group, message, params) do
     full_params =
       params
       |> Map.put(:message_id, message.id)
+      |> Map.put(:group_id, group.id)
       |> Map.put(:user_id, user.id)
 
     %MessageGroup{}
     |> Changeset.change(full_params)
     |> Repo.insert(
       on_conflict: :replace_all,
-      conflict_target: [:message_id, :user_id]
+      conflict_target: [:message_id, :group_id, :user_id]
     )
     |> after_update_user_state()
   end

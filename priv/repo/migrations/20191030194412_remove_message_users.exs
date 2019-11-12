@@ -11,6 +11,10 @@ defmodule Talk.Repo.Migrations.RemoveMessageUsers do
       add :read_state, :message_read_state, null: false, default: "UNREAD"
       add :user_id, references(:users, type: :string), null: false
     end
+
+    execute("DROP INDEX message_groups_message_id_group_id_index")
+
+    create unique_index(:message_groups, [:message_id, :group_id, :user_id])
   end
 
   def down do

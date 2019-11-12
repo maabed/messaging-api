@@ -85,8 +85,8 @@ defmodule Talk.Events do
   end
 
   defp publish(payload, topics) do
-    Logger.debug "publishing user event topics: #{inspect topics}"
-    Logger.debug "publishing user event payload: #{inspect payload}"
+    # Logger.debug "publishing user event topics: #{inspect topics}"
+    # Logger.debug "publishing user event payload: #{inspect payload}"
     Absinthe.Subscription.publish(TalkWeb.Endpoint, payload, topics)
   end
 end

@@ -6,7 +6,7 @@ defmodule TalkWeb.Resolver.Messages do
   require Logger
 
   alias Ecto.Changeset
-  alias Talk.{Groups, Messages, Users}
+  alias Talk.{Groups, Messages}
   alias Talk.Schemas.{Group, Message, User}
   alias TalkWeb.Resolver.Helpers
   alias Talk.Messages.Connector
@@ -84,18 +84,18 @@ defmodule TalkWeb.Resolver.Messages do
     end
   end
 
-  def create_message(args, %{context: %{user: user}}) do
-    with {:ok, user} <- Users.get_user_by_id(user.id),
-         {:ok, %{message: message}} <- Messages.create_message(user, args) do
-      {:ok, %{success: true, message: message, errors: []}}
-    else
-      {:error, :message, changeset, _} ->
-        {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+  # def create_message(args, %{context: %{user: user}}) do
+  #   with {:ok, user} <- Users.get_user_by_id(user.id),
+  #        {:ok, %{message: message}} <- Messages.create_message(user, args) do
+  #     {:ok, %{success: true, message: message, errors: []}}
+  #   else
+  #     {:error, :message, changeset, _} ->
+  #       {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
 
-      err ->
-        err
-    end
-  end
+  #     err ->
+  #       err
+  #   end
+  # end
 
   @spec update_message(map(), info()) :: message_mutation_result()
   def update_message(args, %{context: %{user: user}}) do
@@ -125,9 +125,10 @@ defmodule TalkWeb.Resolver.Messages do
 
   @spec mark_as_unread(map(), info()) :: message_mutation_result()
           | {:error, String.t()}
-  def mark_as_unread(%{message_ids: message_ids}, %{context: %{user: user}}) do
-    with {:ok, messages} <- Messages.get_messages(user, message_ids),
-         {:ok, unread_messages} <- Messages.mark_as_unread(user, messages) do
+  def mark_as_unread(args, %{context: %{user: user}}) do
+    with {:ok, group} <- Groups.get_group(user, args.group_id),
+         {:ok, messages} <- Messages.get_messages(user, args.message_ids),
+         {:ok, unread_messages} <- Messages.mark_as_unread(user, group, messages) do
       {:ok, %{success: true, messages: unread_messages, errors: []}}
     else
       {:error, changeset} ->
@@ -138,9 +139,10 @@ defmodule TalkWeb.Resolver.Messages do
   end
 
   @spec mark_as_read(map(), info()) :: message_mutation_result()
-  def mark_as_read(%{message_ids: message_ids}, %{context: %{user: user}}) do
-    with {:ok, messages} <- Messages.get_messages(user, message_ids),
-         {:ok, read_messages} <- Messages.mark_as_read(user, messages) do
+  def mark_as_read(args, %{context: %{user: user}}) do
+    with {:ok, group} <- Groups.get_group(user, args.group_id),
+         {:ok, messages} <- Messages.get_messages(user, args.message_ids),
+         {:ok, read_messages} <- Messages.mark_as_read(user, group, messages) do
       {:ok, %{success: true, messages: read_messages, errors: []}}
     else
       {:error, changeset} ->

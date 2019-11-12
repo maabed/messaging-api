@@ -110,11 +110,13 @@ defmodule TalkWeb.Type.Message do
 
     field :mark_as_unread, type: :mark_as_unread_response do
       arg :message_ids, non_null(list_of(:id))
+      arg :group_id, non_null(:id)
       resolve &Resolver.mark_as_unread/2
     end
 
     field :mark_as_read, type: :mark_as_unread_response do
       arg :message_ids, non_null(list_of(:id))
+      arg :group_id, non_null(:id)
       resolve &Resolver.mark_as_read/2
     end
 
