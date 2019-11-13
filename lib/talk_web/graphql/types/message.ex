@@ -16,7 +16,7 @@ defmodule TalkWeb.Type.Message do
     field :groups, list_of(:group), resolve: dataloader(:db)
     field :sender, non_null(:user), resolve: &Resolver.message_sender/3
     field :is_request, non_null(:boolean)
-    field :recipients, list_of(:user), resolve: dataloader(:db)
+    field :recipients, list_of(:user), resolve: &Resolver.list_recipients/3
     field :updated_at, non_null(:timestamp)
     field :inserted_at, non_null(:timestamp)
 

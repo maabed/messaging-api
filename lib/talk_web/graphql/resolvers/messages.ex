@@ -6,7 +6,7 @@ defmodule TalkWeb.Resolver.Messages do
   require Logger
 
   alias Ecto.Changeset
-  alias Talk.{Groups, Messages}
+  alias Talk.{Groups, Messages, Users}
   alias Talk.Schemas.{Group, Message, User}
   alias TalkWeb.Resolver.Helpers
   alias Talk.Messages.Connector
@@ -25,22 +25,20 @@ defmodule TalkWeb.Resolver.Messages do
           }} | {:error, String.t()}
 
   def messages(%Group{} = group, args, info) do
+    Logger.warn("messages here ")
     Connector.get(group, struct(Connector, args), info)
   end
 
   @spec messages(map(), info()) :: paginated_result()
   def messages(args, info) do
+    Logger.warn("messages here 1")
+
     Connector.get(nil, struct(Connector, args), info)
   end
 
   @spec message_sender(Message.t(), map(), info()) :: dataloader_result()
-  def message_sender(%Message{user_id: user_id} = _message, _, %{context: %{loader: loader}})
-      when is_binary(user_id) do
-    loader
-    |> Dataloader.load(:db, User, user_id)
-    |> on_load(fn loader ->
-      {:ok, Dataloader.get(loader, :db, User, user_id)}
-    end)
+  def message_sender(%Message{user_id: user_id} = _message, _args, _info) when is_binary(user_id) do
+    Users.get_user_by_id(user_id)
   end
 
   @spec can_edit_message(Message.t(), map(), info()) :: dataloader_result()
@@ -79,6 +77,17 @@ defmodule TalkWeb.Resolver.Messages do
       {:error, :message, changeset, _} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
 
+      err ->
+        err
+    end
+  end
+
+  @spec list_recipients(Message.t(), map(), info()) :: message_mutation_result()
+  def list_recipients(%Message{id: id} = _message, _args, %{context: %{user: user}}) do
+    with {:ok, group} <- Groups.get_group_by_message_id(user, id),
+         {:ok, users} <- Groups.list_recipients(group, id) do
+      {:ok, users}
+    else
       err ->
         err
     end

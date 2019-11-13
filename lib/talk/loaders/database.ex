@@ -17,7 +17,11 @@ defmodule Talk.Loaders.Database do
 
   def query(Group, %{user: user}), do: Groups.groups_base_query(user)
 
-  def query(GroupUser, %{user: _user}), do: GroupUser
+  def query(GroupUser, %{user: %User{id: user_id}}) do
+    from gu in GroupUser,
+      join: u in assoc(gu, :user),
+      where: u.id == ^user_id
+  end
 
   def query(Message, %{user: user}), do: Messages.messages_base_query(user)
 

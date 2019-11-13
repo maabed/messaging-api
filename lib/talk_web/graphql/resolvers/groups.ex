@@ -46,8 +46,8 @@ defmodule TalkWeb.Resolver.Groups do
   end
 
   @spec group_users(Group.t(), map(), info()) :: paginated_result()
-  def group_users(%Group{} = user, args, %{context: %{user: _user}} = info) do
-    GroupUsersConnector.get(user, struct(GroupUsersConnector, args), info)
+  def group_users(%Group{} = group, args, %{context: %{user: _user}} = info) do
+    GroupUsersConnector.get(group, struct(GroupUsersConnector, args), info)
   end
 
   @spec create_group(map(), info()) :: group_mutation_result()

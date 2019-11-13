@@ -7,7 +7,7 @@ defmodule Talk.Groups do
   alias Talk.Repo
   alias Ecto.Changeset
   alias Talk.{Groups, Events}
-  alias Talk.Schemas.{Group, GroupUser, User}
+  alias Talk.Schemas.{Group, GroupUser, Message, MessageGroup, User}
 
   @spec groups_base_query(User.t()) :: Ecto.Query.t()
   def groups_base_query(user), do: Groups.Query.base_query(user)
@@ -64,12 +64,31 @@ defmodule Talk.Groups do
 
   @spec get_group_by_recipients(User.t(), [String.t()]) :: {:ok, Group.t()} | {:error, String.t()}
   def get_group_by_recipients(%User{} = user, recipient_ids) do
-      query =
-        from g in group_recipients_base_query(user, recipient_ids),
-          limit: 1
+    query =
+      from g in group_recipients_base_query(user, recipient_ids),
+        limit: 1
+
+    case Repo.one(query) do
+      %Group{} = group ->
+        {:ok, group}
+
+      _ ->
+        {:error, nil}
+    end
+  end
+
+  @spec get_group_by_message_id(User.t(), String.t()) :: {:ok, Group.t()} | {:error, String.t()}
+  def get_group_by_message_id(%User{} = user, message_id) do
+    query =
+      from g in groups_base_query(user),
+        join: mg in MessageGroup,
+        on: mg.message_id == ^message_id,
+        where: mg.group_id == g.id
 
       case Repo.one(query) do
         %Group{} = group ->
+          Logger.warn("get_group_by_message_id #{inspect group}")
+
           {:ok, group}
 
         _ ->
@@ -172,6 +191,20 @@ defmodule Talk.Groups do
   end
 
   defp after_update_group(err), do: err
+
+  @spec list_recipients(Group.t(), String.t()) :: {:ok, [GroupUser.t()]} | no_return()
+  def list_recipients(group, msg_id) do
+    base_query = group_members_base_query(group)
+
+    query =
+      from gu in subquery(base_query),
+        left_join: m in Message,
+        on: m.id == ^msg_id,
+        where: m.user_id != gu.user_id,
+        order_by: {:asc, gu.username}
+
+    {:ok, Repo.all(query)}
+  end
 
   @spec list_members(Group.t()) :: {:ok, [GroupUser.t()]} | no_return()
   def list_members(group) do

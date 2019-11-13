@@ -22,7 +22,7 @@ defmodule Talk.Messages.Query do
       left_join: gu in GroupUser,
       on: gu.user_id == u.id and gu.group_id == g.id,
       left_join: mg in MessageGroup,
-      on: mg.message_id == m.id and mg.group_id == g.id,
+      on: mg.message_id == m.id and mg.group_id == gu.group_id,
       where: m.state != "DELETED",
       where: g.is_private == true,
       distinct: m.id
@@ -122,13 +122,15 @@ defmodule Talk.Messages.Query do
 
   @spec where_specific_recipients(Ecto.Query.t(), [String.t()]) :: Ecto.Query.t()
   def where_specific_recipients(query, usernames) do
+    Logger.warn("usernames #{inspect usernames}")
+
     base_query =
       from [m, u, g, gu] in query,
         inner_join: mg2 in MessageGroup,
         on: mg2.message_id == m.id,
         left_join: u2 in User,
         on: u2.id == mg2.user_id,
-        where: is_nil(g.id),
+        where: g.id == mg2.group_id,
         group_by: m.id,
         select_merge: %{recipient_username: fragment("array_agg(?)", u2.username)}
 
