@@ -9,6 +9,7 @@ defmodule TalkWeb.Schema do
   import_types TalkWeb.Type.User
   import_types TalkWeb.Type.Enum
   import_types TalkWeb.Type.Group
+  import_types TalkWeb.Type.Search
   import_types TalkWeb.Type.Message
   import_types TalkWeb.Type.Paginator
   import_types TalkWeb.Type.Subscriptions
@@ -20,6 +21,7 @@ defmodule TalkWeb.Schema do
   query do
     import_fields(:user_queries)
     import_fields(:group_queries)
+    import_fields(:search_queries)
     import_fields(:message_queries)
   end
 
