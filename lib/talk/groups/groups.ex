@@ -87,8 +87,6 @@ defmodule Talk.Groups do
 
       case Repo.one(query) do
         %Group{} = group ->
-          Logger.warn("get_group_by_message_id #{inspect group}")
-
           {:ok, group}
 
         _ ->

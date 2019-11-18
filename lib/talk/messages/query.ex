@@ -13,23 +13,23 @@ defmodule Talk.Messages.Query do
         join: u in User,
         on: u.id == ^user_id
 
-    base_query_with_user(query)
+    base_query_with_user(query, user_id)
   end
 
-  defp base_query_with_user(query) do
+  defp base_query_with_user(query, user_id) do
     from [m, u] in query,
       left_join: g in assoc(m, :groups),
       left_join: gu in GroupUser,
-      on: gu.user_id == u.id and gu.group_id == g.id,
+      on: gu.user_id == u.id and gu.group_id == g.id and gu.user_id == ^user_id,
       left_join: mg in MessageGroup,
       on: mg.message_id == m.id and mg.group_id == gu.group_id,
-      where: m.state != "DELETED",
-      where: g.is_private == true,
+      where: m.state != "DELETED" and g.is_private == true,
       distinct: m.id
   end
 
   @spec where_in_group(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
   def where_in_group(query, group_id) do
+    Logger.warn("where_in_group called")
     from [m, u, g, gu] in query,
       where: g.id == ^group_id
   end

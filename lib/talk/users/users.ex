@@ -12,9 +12,10 @@ defmodule Talk.Users do
   @type changeset_result :: {:ok, User.t()} | {:error, Changeset.t() | String.t()}
 
   @spec users_base_query(User.t()) :: Ecto.Query.t()
-  def users_base_query(%User{} = user) do
+  def users_base_query(%User{} = _user) do
     from u in User,
-      where: u.id == ^user.id
+      where: not is_nil(u.id)
+      # where: u.id == ^user.id
   end
 
   @spec get_user_by_id(String.t()) :: query_result()
