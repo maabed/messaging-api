@@ -7,7 +7,7 @@ defmodule Talk.Messages.Query do
   alias Talk.Schemas.{GroupUser, Message, MessageGroup, User, UserLog}
 
   @spec base_query(User.t()) :: Ecto.Query.t()
-  def base_query(%User{id: user_id} = _user) do
+  def base_query(%User{id: user_id}) do
     query =
       from m in Message,
         join: u in User,
@@ -20,16 +20,15 @@ defmodule Talk.Messages.Query do
     from [m, u] in query,
       left_join: g in assoc(m, :groups),
       left_join: gu in GroupUser,
-      on: gu.user_id == u.id and gu.group_id == g.id and gu.user_id == ^user_id,
+      on: gu.user_id == u.id and gu.group_id == g.id,
       left_join: mg in MessageGroup,
-      on: mg.message_id == m.id and mg.group_id == gu.group_id,
-      where: m.state != "DELETED" and g.is_private == true,
+      on: mg.user_id == u.id, # and mg.group_id == gu.group_id,
+      where: gu.user_id == ^user_id and m.state != "DELETED" and g.is_private == true,
       distinct: m.id
   end
 
   @spec where_in_group(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
   def where_in_group(query, group_id) do
-    Logger.warn("where_in_group called")
     from [m, u, g, gu] in query,
       where: g.id == ^group_id
   end
@@ -89,7 +88,7 @@ defmodule Talk.Messages.Query do
     where(query, [m, u, g, gu, mg], mg.read_state == "UNREAD")
   end
 
-  @spec where_is_request(Ecto.Query.t()) :: Ecto.Query.t()
+  @spec where_is_follower(Ecto.Query.t()) :: Ecto.Query.t()
   def where_is_follower(query) do
     where(query, [m, u, g, gu], m.is_request == false)
   end
@@ -122,8 +121,6 @@ defmodule Talk.Messages.Query do
 
   @spec where_specific_recipients(Ecto.Query.t(), [String.t()]) :: Ecto.Query.t()
   def where_specific_recipients(query, usernames) do
-    Logger.warn("usernames #{inspect usernames}")
-
     base_query =
       from [m, u, g, gu] in query,
         inner_join: mg2 in MessageGroup,

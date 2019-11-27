@@ -83,7 +83,8 @@ defmodule Talk.Groups do
       from g in groups_base_query(user),
         join: mg in MessageGroup,
         on: mg.message_id == ^message_id,
-        where: mg.group_id == g.id
+        where: mg.group_id == g.id,
+        limit: 1
 
       case Repo.one(query) do
         %Group{} = group ->

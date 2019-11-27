@@ -6,12 +6,13 @@ defmodule Talk.Groups.Query do
   alias Talk.Schemas.{Group, GroupUser, User}
 
   @spec base_query(User.t()) :: Ecto.Query.t()
-  def base_query(%User{id: user_id} = _user) do
+  def base_query(%User{id: user_id}) do
     from g in Group,
-      left_join: gu in GroupUser,
-      on: gu.group_id == g.id and gu.user_id == ^user_id,
       join: u in User,
       on: u.id == ^user_id,
+      left_join: gu in GroupUser,
+      on: gu.group_id == g.id and gu.user_id == u.id,
+      where: gu.user_id == ^user_id,
       where: g.state != "DELETED"
   end
 
