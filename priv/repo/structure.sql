@@ -31,6 +31,20 @@ COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings
 
 
 --
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+
+--
 -- Name: group_state; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -140,7 +154,8 @@ CREATE TABLE public.files (
     size integer NOT NULL,
     user_id character varying(255) NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    url text
 );
 
 
@@ -640,6 +655,13 @@ CREATE UNIQUE INDEX message_reactions_message_id_value_index ON public.message_r
 
 
 --
+-- Name: users_display_name_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX users_display_name_trgm ON public.users USING gin (display_name public.gin_trgm_ops);
+
+
+--
 -- Name: users_id_index; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -665,6 +687,13 @@ CREATE UNIQUE INDEX users_lower_username_index ON public.users USING btree (lowe
 --
 
 CREATE UNIQUE INDEX users_profile_id_index ON public.users USING btree (profile_id);
+
+
+--
+-- Name: users_username_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX users_username_trgm ON public.users USING gin (username public.gin_trgm_ops);
 
 
 --
@@ -807,5 +836,5 @@ ALTER TABLE ONLY public.user_log
 -- PostgreSQL database dump complete
 --
 
-INSERT INTO public."schema_migrations" (version) VALUES (20190718000001), (20190718002331), (20190718002847), (20190718003511), (20190718004032), (20190724221745), (20190731150948), (20190731151100), (20190806051809), (20190807090748), (20190811203434), (20190916195655), (20190916195840), (20191030194412);
+INSERT INTO public."schema_migrations" (version) VALUES (20190718000001), (20190718002331), (20190718002847), (20190718003511), (20190718004032), (20190724221745), (20190731150948), (20190731151100), (20190806051809), (20190807090748), (20190811203434), (20190916195655), (20190916195840), (20191030194412), (20191114191257), (20191127085646);
 

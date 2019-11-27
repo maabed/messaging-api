@@ -31,7 +31,7 @@ defmodule Talk.Groups.Query do
       |> Enum.uniq()
       |> Enum.take(1) # change when add support for groups > 2 users
 
-    from [g, gu] in base_query(user),
+    from [g, u, gu] in base_query(user),
       join: gu2 in GroupUser,
       on: gu.id != gu2.id and gu.group_id == gu2.group_id,
       where: gu.user_id == ^user.id,
