@@ -2,9 +2,11 @@ defmodule Talk.AssetStore do
   @moduledoc """
   Responsible for taking file uploads and storing them.
   """
+  require Logger
 
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
+  @alphabet Enum.to_list(?a..?z) ++ Enum.to_list(?0..?9)
 
   @doc "Uploads an avatar with a randomly-generated file name."
   @spec persist_avatar(String.t()) :: {:ok, filename :: String.t()} | :error
@@ -26,21 +28,23 @@ defmodule Talk.AssetStore do
 
   @doc "Uploads a file."
   @spec persist_file(String.t(), String.t(), binary(), String.t()) :: {:ok, String.t()} | {:error, any()}
-  def persist_file(unique_id, filename, binary_data, content_type) do
-    unique_id
+  def persist_file(id, filename, binary_data, content_type) do
+    id
     |> build_file_path(filename)
     |> @adapter.persist(@bucket, binary_data, content_type)
   end
 
   @doc "Generates the URL for a file upload."
   @spec file_url(String.t(), String.t()) :: String.t()
-  def file_url(unique_id, filename) do
-    unique_id
+  def file_url(id, filename) do
+    id
     |> build_file_path(filename)
     |> @adapter.public_url(@bucket)
   end
 
-  defp build_file_path(unique_id, filename), do: "uploads/" <> unique_id <> "/" <> filename
+  defp build_file_path(id, filename) do
+    "uploads/" <> to_string(id) <> "-" <> random_alphabet() <> "/" <> filename
+  end
 
   defp decode_base64_data_url(raw_data) do
     raw_data
@@ -60,8 +64,20 @@ defmodule Talk.AssetStore do
     |> unique_filename("avatar")
   end
 
-  defp unique_filename(extension, prefix), do: prefix <> "/" <> Ecto.UUID.generate() <> extension
+  defp unique_filename(extension, prefix), do: prefix <> "/" <> random_alphabet() <> extension
 
   defp image_extension(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _::binary>>), do: ".png"
   defp image_extension(<<0xFF, 0xD8, _::binary>>), do: ".jpg"
+
+  # defp random_string() do
+  #   :crypto.strong_rand_bytes(12)
+  #   |> Base.encode64()
+  #   |> binary_part(0, 12)
+  # end
+
+  defp random_alphabet() do
+    @alphabet
+    |> Enum.take_random(12)
+    |> to_string
+  end
 end

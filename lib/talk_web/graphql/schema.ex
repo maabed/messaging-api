@@ -14,6 +14,8 @@ defmodule TalkWeb.Schema do
   import_types TalkWeb.Type.Paginator
   import_types TalkWeb.Type.Subscriptions
 
+  import_types Absinthe.Plug.Types
+
   def plugins, do: [Absinthe.Middleware.Dataloader] ++ Absinthe.Plugin.defaults()
 
   def middleware(middleware, _field, _object), do: middleware ++ [Middleware.ErrorHandler]

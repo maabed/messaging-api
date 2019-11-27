@@ -7,6 +7,10 @@ defmodule Talk.Files do
   alias Talk.AssetStore
   alias Talk.Repo
   alias Talk.Schemas.{File, User}
+  require Logger
+
+  @adapter Application.get_env(:talk, :asset_store)[:adapter]
+  @bucket Application.get_env(:talk, :asset_store)[:bucket]
 
   @spec file_url(File.t()) :: String.t()
   def file_url(%File{} = file) do
@@ -43,10 +47,21 @@ defmodule Talk.Files do
 
     Multi.new()
     |> Multi.insert(:file, File.create_changeset(%File{}, params))
-    |> Multi.run(:store, fn %{file: %File{id: id, filename: filename}} ->
+    |> Multi.run(:store_url, fn _, %{file: %File{id: id, filename: filename}} ->
       AssetStore.persist_file(id, filename, binary_data, params.content_type)
     end)
+    |> Multi.run(:update_url, fn _repo, %{file: file, store_url: store_url} ->
+      file
+      |> File.update_changeset(%{url: store_url})
+      |> Repo.update()
+    end)
     |> Repo.transaction()
+    |> case do
+      {:ok, %{file: file, store_url: store_url, update_url: _update_url}} ->
+        {:ok, %{file: file |> Map.put(:url, @adapter.public_url(store_url, @bucket))}}
+      {:error, :store_url, _value, _} -> {:error, :upload_to_store_error}
+      {:error, _, _, _others} -> {:error, :error}
+    end
   end
 
   defp store_file(err, _, _), do: err
