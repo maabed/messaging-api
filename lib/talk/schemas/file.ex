@@ -4,7 +4,7 @@ defmodule Talk.Schemas.File do
   """
 
   use Ecto.Schema
-
+  require Logger
   import Ecto.Changeset
 
   alias Talk.Schemas.{MessageFile, User}
@@ -15,8 +15,9 @@ defmodule Talk.Schemas.File do
     field :filename, :string
     field :content_type, :string
     field :size, :integer
+    field :url, :string
 
-    belongs_to :user, User
+    belongs_to :user, User, type: :string
     has_many :message_files, MessageFile
     has_many :messages, through: [:message_files, :message]
 
@@ -26,5 +27,11 @@ defmodule Talk.Schemas.File do
   def create_changeset(struct, attrs \\ %{}) do
     struct
     |> cast(attrs, [:user_id, :filename, :content_type, :size])
+  end
+
+  def update_changeset(struct, attrs \\ %{}) do
+    struct
+    |> cast(attrs, [:filename, :url])
+    |> validate_required([:filename, :url])
   end
 end

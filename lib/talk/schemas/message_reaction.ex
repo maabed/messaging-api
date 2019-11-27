@@ -15,7 +15,7 @@ defmodule Talk.Schemas.MessageReaction do
   schema "message_reactions" do
     field :value, :string, read_after_writes: true
 
-    belongs_to :user, User
+    belongs_to :user, User, type: :string
     belongs_to :message, Message
 
     timestamps()
