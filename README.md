@@ -18,7 +18,7 @@ To start chat server:
 * Seed sapien users/followers tables into chat db with `mix run priv/repo/seeds.exs`
 * Start Phoenix endpoint with `source .env && iex -S mix phx.server`
 
-Graphql endpoint at [`localhost:7000/graphql`](http://localhost:7000/graphql)
+Graphql endpoint at [`localhost:7000/chat-graphql`](http://localhost:7000/graphql)
 GraphiQL playground at [`localhost:7000/graphiql`](http://localhost:7000/graphiql)
 
 ### Creating user and generat JWT tokon

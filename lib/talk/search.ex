@@ -8,9 +8,6 @@ defmodule Talk.Search do
 
   @sim_limit 0.05
 
-  # @users_columns ~w(id profile_id username display_name email avatar score)
-  # @groups_columns ~w(id profile_id username display_name email avatar score)
-
   # When query is empty, just return an array
   def users(query, _user) when byte_size(query) == 0, do: []
 
