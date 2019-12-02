@@ -5,7 +5,6 @@ defmodule TalkWeb.Type.User do
 
   alias Talk.AssetStore
   alias TalkWeb.Resolver.Users, as: UserResolver
-  alias TalkWeb.Resolver.Groups, as: GroupResolver
   alias Talk.Groups
 
   object :user do
@@ -17,22 +16,13 @@ defmodule TalkWeb.Type.User do
     field :inserted_at, non_null(:timestamp)
     field :updated_at, non_null(:timestamp)
 
-    field :users, non_null(:user_pagination) do
+    field :followers, non_null(:user_pagination) do
       arg :first, :integer
       arg :last, :integer
       arg :before, :timestamp
       arg :after, :timestamp
       arg :order_by, :user_order
-      resolve &UserResolver.users/3
-    end
-
-    field :group_users, non_null(:group_user_pagination) do
-      arg :first, :integer
-      arg :last, :integer
-      arg :before, :timestamp
-      arg :after, :timestamp
-      arg :order_by, :group_order
-      resolve &GroupResolver.group_users/3
+      resolve &UserResolver.followers/3
     end
 
     field :bookmarks, list_of(:group) do

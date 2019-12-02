@@ -6,7 +6,7 @@ defmodule Talk.Users do
   alias Talk.AssetStore
   alias Ecto.Changeset
   alias Talk.Repo
-  alias Talk.Schemas.User
+  alias Talk.Schemas.{Follower, User}
 
   @type query_result :: {:ok, User.t()} | {:error, String.t()}
   @type changeset_result :: {:ok, User.t()} | {:error, Changeset.t() | String.t()}
@@ -16,6 +16,14 @@ defmodule Talk.Users do
     from u in User,
       where: not is_nil(u.id)
       # where: u.id == ^user.id
+  end
+
+  @spec followers_query(User.t()) :: Ecto.Query.t()
+  def followers_query(%User{profile_id: profile_id} = _user) do
+    from u in User,
+      join: f in Follower,
+      on: f.following_id == u.profile_id,
+      where: f.follower_id == ^profile_id
   end
 
   @spec get_user_by_id(String.t()) :: query_result()

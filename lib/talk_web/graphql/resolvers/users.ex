@@ -53,6 +53,11 @@ defmodule TalkWeb.Resolver.Users do
     Connector.get(user, struct(Connector, args), info)
   end
 
+  @spec followers(User.t(), map(), info()) :: paginated_result()
+  def followers(%User{} = user, args, %{context: %{user: _user}} = info) do
+    Connector.get_followers(user, struct(Connector, args), info)
+  end
+
   @spec update_user(map(), info()) :: user_mutation_result()
   def update_user(args, %{context: %{user: user}}) do
     case Users.update_user(user, args) do

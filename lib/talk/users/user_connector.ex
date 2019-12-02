@@ -37,4 +37,17 @@ defmodule Talk.Users.Connector do
       {:error, "unauthorized"}
     end
   end
+
+  def get_followers(%User{} = user, args, %{context: %{user: current_user}} = _info) do
+    if current_user == user do
+      base_query =
+        user
+        |> Users.followers_query()
+
+      wrapped_query = from(su in subquery(base_query))
+      Pagination.fetch_result(wrapped_query, Args.build(args))
+    else
+      {:error, "unauthorized"}
+    end
+  end
 end
