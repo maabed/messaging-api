@@ -25,16 +25,16 @@ defmodule Talk.Search do
               SELECT id, profile_id, username, display_name, email, avatar, 1.0::float AS score
               FROM users
               LEFT JOIN followers f ON f.follower_id = $3
-              LEFT JOIN blocked_profiles b ON b.blocked_by_id = $3
-              WHERE username ILIKE $1 OR display_name ILIKE $1
+              LEFT JOIN blocked_profiles b ON b.blocked_by_id = $3 AND b.blocked_profile_id = profile_id
+              WHERE (username ILIKE $1 OR display_name ILIKE $1) AND b.blocked_by_id IS NULL
             )
             UNION
             (
               SELECT id, profile_id, username, display_name, email, avatar, 0.5::float AS score
               FROM users
               LEFT JOIN followers f ON f.follower_id = $3
-              LEFT JOIN blocked_profiles b ON b.blocked_by_id = $3
-              WHERE username ~* $2 OR display_name ~* $2
+              LEFT JOIN blocked_profiles b ON b.blocked_by_id = $3 AND b.blocked_profile_id = profile_id
+              WHERE (username ~* $2 OR display_name ~* $2) AND b.blocked_by_id IS NULL
             )
           ) u ORDER BY id, score DESC
         )
@@ -50,20 +50,27 @@ defmodule Talk.Search do
   # When queries are 3+ characters, we can use Postgres trigram search
   def users(query, %User{profile_id: profile_id}) when byte_size(query) >= 3 do
     sql = """
-    (
-      SELECT id, profile_id, username, display_name, email, avatar, score
-      FROM (
-        SELECT *, SIMILARITY(username || ' ' || display_name, $1) AS score
-        FROM users
-        LEFT JOIN followers f ON f.follower_id = $2
-        LEFT JOIN blocked_profiles b ON b.blocked_by_id = $2
-        ORDER BY score DESC
-      ) AS u
-      WHERE score > $3
-    )
-    ORDER BY score DESC
-    LIMIT 10
+      SELECT * FROM
+      (
+        (SELECT DISTINCT on(id) * FROM
+          (
+            SELECT id, profile_id, username, display_name, email, avatar, score
+            FROM (
+              SELECT *, SIMILARITY(username || ' ' || display_name, $1) AS score
+              FROM users
+              LEFT JOIN followers f ON f.follower_id = $2
+              LEFT JOIN blocked_profiles b ON b.blocked_by_id = $2 AND b.blocked_profile_id = profile_id
+              WHERE b.blocked_by_id IS NULL
+              ORDER BY score DESC
+            ) AS u
+            WHERE score > $3
+          ) a
+        )
+      ) z
+      ORDER BY score DESC
+      LIMIT 10
     """
+
     result = SQL.query!(Repo, sql, [query, profile_id, @sim_limit])
     to_json(result)
   end
