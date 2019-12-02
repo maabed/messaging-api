@@ -32,31 +32,14 @@ defmodule TalkWeb.Type.Group do
       resolve &MessageResolver.messages/3
     end
 
-    field :group_users, non_null(:group_user_pagination) do
-      arg :first, :integer
-      arg :last, :integer
-      arg :before, :timestamp
-      arg :after, :timestamp
-      arg :order_by, :user_order
-      resolve &GroupResolver.group_users/3
+    @desc "The group users."
+    field :members, list_of(:group_user) do
+      resolve fn group, _, _ -> Groups.list_members(group) end
     end
 
     @desc "Group owner."
     field :owners, list_of(:group_user) do
       resolve fn group, _, _ -> Groups.list_owners(group) end
-    end
-
-    @desc "The group users."
-    field :members, :group_user do
-      resolve fn group, _, %{context: %{loader: loader}} ->
-        Helpers.loader_with_handler(%{
-          loader: loader,
-          source_name: :db,
-          batch_key: {:one, GroupUser},
-          item_key: [group_id: group.id],
-          handler_fn: fn record -> {:ok, record} end
-        })
-      end
     end
 
     field :is_bookmarked, non_null(:boolean) do
@@ -70,6 +53,15 @@ defmodule TalkWeb.Type.Group do
         })
       end
     end
+
+    # field :group_users, non_null(:group_user_pagination) do
+    #   arg :first, :integer
+    #   arg :last, :integer
+    #   arg :before, :timestamp
+    #   arg :after, :timestamp
+    #   arg :order_by, :user_order
+    #   resolve &GroupResolver.group_users/3
+    # end
 
     field :can_manage_permissions, non_null(:boolean) do
       resolve fn group, _, %{context: %{loader: loader}} ->
