@@ -83,11 +83,14 @@ defmodule TalkWeb.Resolver.Messages do
   end
 
   @spec list_recipients(Message.t(), map(), info()) :: message_mutation_result()
-  def list_recipients(%Message{id: id} = _message, _args, %{context: %{user: user}}) do
-    with {:ok, group} <- Groups.get_group_by_message_id(user, id),
+  def list_recipients(%Message{id: id, user_id: user_id} = _message, _args, _info) do
+    with {:ok, group} <- Groups.get_group_by_message_id(user_id, id),
          {:ok, users} <- Groups.list_recipients(group, id) do
       {:ok, users}
     else
+      {:error, changeset} ->
+        {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
       err ->
         err
     end

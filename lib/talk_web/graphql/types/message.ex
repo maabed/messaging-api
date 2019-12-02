@@ -16,7 +16,7 @@ defmodule TalkWeb.Type.Message do
     field :groups, list_of(:group), resolve: dataloader(:db)
     field :sender, non_null(:user), resolve: &Resolver.message_sender/3
     field :is_request, non_null(:boolean)
-    field :recipients, list_of(:user), resolve: &Resolver.list_recipients/3
+    field :recipients, list_of(:group_user), resolve: &Resolver.list_recipients/3
     field :updated_at, non_null(:timestamp)
     field :inserted_at, non_null(:timestamp)
 
@@ -90,10 +90,10 @@ defmodule TalkWeb.Type.Message do
   object :message_mutations do
     field :create_message, type: :message_mutation_response do
       arg :body, non_null(:string)
-      arg :group_id, :id
+      arg :group_id, non_null(:id)
       arg :file_ids, list_of(:id)
       arg :is_request, :boolean
-      arg :recipient_ids, list_of(:id)
+      arg :recipient_usernames, list_of(:string)
       resolve &Resolver.create_message/2
     end
 
