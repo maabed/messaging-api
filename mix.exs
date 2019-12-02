@@ -56,6 +56,7 @@ defmodule Talk.MixProject do
       {:csv, "~> 2.3"},
       {:credo, "~>  1.1", only: [:dev, :test], runtime: false},
       {:faker, "~> 0.12", only: [:dev, :test]},
+      {:logster, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:tesla, "~> 1.2"},
       {:basic_auth, "~> 2.2"},

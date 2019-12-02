@@ -27,6 +27,8 @@ defmodule TalkWeb.Endpoint do
     plug Phoenix.CodeReloader
   end
 
+  # plug Plug.Logger
+  plug Logster.Plugs.Logger
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
