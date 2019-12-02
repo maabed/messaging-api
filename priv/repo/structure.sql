@@ -641,10 +641,10 @@ CREATE INDEX message_files_message_id_index ON public.message_files USING btree 
 
 
 --
--- Name: message_groups_message_id_group_id_index; Type: INDEX; Schema: public; Owner: -
+-- Name: message_groups_message_id_group_id_user_id_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX message_groups_message_id_group_id_index ON public.message_groups USING btree (message_id, group_id);
+CREATE UNIQUE INDEX message_groups_message_id_group_id_user_id_index ON public.message_groups USING btree (message_id, group_id, user_id);
 
 
 --
