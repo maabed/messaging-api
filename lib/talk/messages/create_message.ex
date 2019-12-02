@@ -6,7 +6,7 @@ defmodule Talk.Messages.CreateMessage do
 
   alias Talk.Repo
   alias Ecto.Multi
-  alias Talk.{Events, Files, Messages}
+  alias Talk.{Events, Files, Groups, Messages}
   alias Talk.Schemas.{Group, Message, MessageGroup, User, UserLog}
 
   @type result :: {:ok, map()} | {:error, any(), any(), map()}
@@ -73,8 +73,8 @@ defmodule Talk.Messages.CreateMessage do
   end
 
   defp after_insert_message({:ok, %{message: message} = result}, group, user, params) do
-    # Messages.subscribe(user, [message])
     subscribe_recipients(message, user, group, params)
+    subscribe_group_users(message, result)
     send_events(message)
 
     {:ok, result}
@@ -82,12 +82,12 @@ defmodule Talk.Messages.CreateMessage do
 
   defp after_insert_message(err, _, _, _), do: err
 
-  defp subscribe_recipients(_message, _group, _user, %{recipient_ids: []}), do: nil
+  defp subscribe_recipients(_message, _group, _user, %{recipient_usernames: []}), do: nil
 
-  defp subscribe_recipients(message, group, _user, %{recipient_ids: ids}) do
+  defp subscribe_recipients(message, group, _user, %{recipient_usernames: usernames}) do
     query =
       from u in User,
-        where: u.id in ^ids
+        where: u.username in ^usernames
 
     recipients = Repo.all(query)
 
@@ -97,6 +97,15 @@ defmodule Talk.Messages.CreateMessage do
   end
 
   defp subscribe_recipients(_message, _group, _user, _params), do: nil
+
+  defp subscribe_group_users(message, %{groups: group}) do
+    {:ok, group_users} = Groups.list_members(group)
+    group_users = Repo.preload(group_users, :user)
+
+    Enum.each(group_users, fn group_user ->
+      Messages.mark_as_unread(group_user.user, group, [message])
+    end)
+  end
 
   defp send_events(message) do
     {:ok, user_ids} = Messages.get_accessor_ids(message)

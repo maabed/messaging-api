@@ -79,8 +79,8 @@ defmodule Talk.Messages do
   # end
 
   @spec create_message(User.t(), Group.t() | User.t(), map()) :: create_message_result()
-  def create_message(user, recipient, params) do
-    CreateMessage.perform(user, recipient, params)
+  def create_message(user, group, params) do
+    CreateMessage.perform(user, group, params)
   end
 
   @spec update_message(User.t(), Message.t(), map()) ::
