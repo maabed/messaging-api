@@ -6,7 +6,7 @@ defmodule Talk.Groups do
 
   alias Talk.Repo
   alias Ecto.Changeset
-  alias Talk.{Groups, Events}
+  alias Talk.{Groups, Events, Users}
   alias Talk.Schemas.{Group, GroupUser, Message, MessageGroup, User}
 
   @spec groups_base_query(User.t()) :: Ecto.Query.t()
@@ -16,7 +16,7 @@ defmodule Talk.Groups do
   def group_members_base_query(group), do: Groups.Query.members_base_query(group)
 
   @spec group_recipients_base_query(User.t(), [String.t()]) :: Ecto.Query.t()
-  def group_recipients_base_query(user, recipient_ids), do: Groups.Query.recipients_base_query(user, recipient_ids)
+  def group_recipients_base_query(user, recipient_usernames), do: Groups.Query.recipients_base_query(user, recipient_usernames)
 
   @spec get_accessor_ids(Group.t()) :: {:ok, [String.t()]} | no_return()
   def get_accessor_ids(%Group{id: group_id, is_private: is_private}) do
@@ -63,9 +63,9 @@ defmodule Talk.Groups do
   end
 
   @spec get_group_by_recipients(User.t(), [String.t()]) :: {:ok, Group.t()} | {:error, String.t()}
-  def get_group_by_recipients(%User{} = user, recipient_ids) do
+  def get_group_by_recipients(%User{} = user, recipient_usernames) do
     query =
-      from g in group_recipients_base_query(user, recipient_ids),
+      from g in group_recipients_base_query(user, recipient_usernames),
         limit: 1
 
     case Repo.one(query) do
@@ -77,8 +77,10 @@ defmodule Talk.Groups do
     end
   end
 
-  @spec get_group_by_message_id(User.t(), String.t()) :: {:ok, Group.t()} | {:error, String.t()}
-  def get_group_by_message_id(%User{} = user, message_id) do
+  @spec get_group_by_message_id(String.t(), String.t()) :: {:ok, Group.t()} | {:error, String.t()}
+  def get_group_by_message_id(user_id, message_id) do
+    {:ok, user} = Users.get_user_by_id(user_id)
+
     query =
       from g in groups_base_query(user),
         join: mg in MessageGroup,
@@ -95,12 +97,10 @@ defmodule Talk.Groups do
       end
   end
 
-  # defp handle_get_group_by_recipients(%Group{} = group), do: {:ok, group}
-
   @spec group_exists?(User.t(), [String.t()]) :: {:ok, boolean()} | {:error, String.t()}
-  def group_exists?(%User{} = user, recipient_ids) do
+  def group_exists?(%User{} = user, recipient_usernames) do
     groups =
-      group_recipients_base_query(user, recipient_ids)
+      group_recipients_base_query(user, recipient_usernames)
       |> Repo.all()
 
     {:ok, length(groups) >= 1, groups}
@@ -119,12 +119,12 @@ defmodule Talk.Groups do
   defp handle_get_group_user(_), do: {:ok, nil}
 
   @spec create_group(User.t(), map()) :: {:ok, %{group: Group.t()}} | {:error, Changeset.t()}
-  def create_group(user, %{recipient_ids: recipient_ids} = params \\ %{}) do
-    ids = Enum.uniq([user.id | recipient_ids])
+  def create_group(user, %{recipient_usernames: recipient_usernames} = params \\ %{}) do
+    usernames = Enum.uniq([user.username | recipient_usernames])
 
     query =
       from u in User,
-        where: u.id in ^ids
+        where: u.username in ^usernames
 
     case Repo.all(query) do
       [] -> {:error, :recipients_not_found}
@@ -145,7 +145,7 @@ defmodule Talk.Groups do
 
             params_with_relations =
               params
-              |> Map.delete(:recipient_ids)
+              |> Map.delete(:recipient_usernames)
               |> Map.put(:user_id, user.id)
               |> Map.put(:name, "d-#{group_name}")
 

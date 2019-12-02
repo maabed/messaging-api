@@ -2,7 +2,7 @@ defmodule Talk.Groups.Query do
   @moduledoc "The Groups context."
 
   import Ecto.Query, warn: false
-
+  require Logger
   alias Talk.Schemas.{Group, GroupUser, User}
 
   @spec base_query(User.t()) :: Ecto.Query.t()
@@ -25,17 +25,18 @@ defmodule Talk.Groups.Query do
   end
 
   @spec recipients_base_query(User.t(), [String.t()]) :: Ecto.Query.t()
-  def recipients_base_query(%User{} = user, recipient_ids) do
-    ids =
-      recipient_ids
+  def recipients_base_query(%User{} = user, recipient_usernames) do
+    usernames =
+      recipient_usernames
       |> Enum.uniq()
       |> Enum.take(1) # change when add support for groups > 2 users
 
     from [g, u, gu] in base_query(user),
       join: gu2 in GroupUser,
       on: gu.id != gu2.id and gu.group_id == gu2.group_id,
-      where: gu.user_id == ^user.id,
-      where: gu2.user_id in ^ids,
+      join: u2 in assoc(gu2, :user),
+      on: u2.id == gu2.user_id and u2.username in ^usernames,
+      # where: gu2.user_id in ^usernames,
       distinct: true
 
     # sub_query =
