@@ -329,8 +329,8 @@ defmodule Talk.Messages do
   @spec get_read_state(Group.t(), String.t(), String.t()) :: :message_user_state | nil
   def get_read_state(group, id, user_id) do
     case get_message_read_state(group, id, user_id) do
-      {:ok, %MessageGroup{read_state: "READ"}} -> {:ok, "READ"}
-      {:ok, %MessageGroup{read_state: "UNREAD"}} -> {:ok, "UNREAD"}
+      {:ok, %MessageGroup{read_state: "READ"}} -> {:ok, true}
+      {:ok, %MessageGroup{read_state: "UNREAD"}} -> {:ok, false}
       _ -> nil
     end
   end
