@@ -8,7 +8,7 @@ defmodule Talk.Schemas.User do
 
   alias Talk.Utils
   alias Ecto.Changeset
-  alias Talk.Schemas.{Follower, BlockedProfile, Group, GroupUser, Message}
+  alias Talk.Schemas.{File, Follower, BlockedProfile, Group, GroupUser, Message}
 
   @type t :: %__MODULE__{}
   @primary_key {:id, :string, autogenerate: false}
@@ -23,6 +23,7 @@ defmodule Talk.Schemas.User do
     field :inserted_at, :utc_datetime_usec
     field :updated_at, :utc_datetime_usec
 
+    has_many :files, File
     has_many :groups, Group
     has_many :messages, Message
     has_many :group_users, GroupUser
