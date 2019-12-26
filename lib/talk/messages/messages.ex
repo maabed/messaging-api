@@ -334,7 +334,7 @@ defmodule Talk.Messages do
     else
       {:error, changeset} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
- 
+
       err ->
         err
     end
@@ -345,7 +345,6 @@ defmodule Talk.Messages do
     query = from mg in MessageGroup,
       join: u in assoc(mg, :user),
       where: mg.group_id == ^group_id,
-      where: mg.read_state == "READ",
       where: mg.message_id == ^message_id
 
     query
@@ -356,5 +355,3 @@ defmodule Talk.Messages do
 
   defp handle_get_message_read_state(message_groups), do: {:ok, message_groups}
 end
-
-
