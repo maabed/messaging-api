@@ -40,7 +40,8 @@ defmodule Talk.Messages.Connector do
             request_state: :follower | :request | :all,
             type: :direct | :group | :all,
             sender: String.t(),
-            recipients: [String.t()]
+            recipients: [String.t()],
+            group_id: String.t()
           },
           order_by: %{
             field: :inserted_at | :last_activity_at,
@@ -49,8 +50,7 @@ defmodule Talk.Messages.Connector do
         }
 
   @doc "Executes a paginated query for messages."
-  @spec get(nil | Group.t(), map(), map()) ::
-          {:ok, Pagination.Result.t()} | {:error, String.t()}
+  @spec get(nil | Group.t(), map(), map()) :: {:ok, Pagination.Result.t()} | {:error, String.t()}
   def get(parent, args, %{context: %{user: user}}) do
     base_query =
       user
@@ -64,6 +64,7 @@ defmodule Talk.Messages.Connector do
       |> apply_last_activity(args)
       |> apply_sender(args)
       |> apply_recipients(args)
+      |> apply_in_group(args)
       |> apply_type(args)
 
     pagination_args =
@@ -76,6 +77,7 @@ defmodule Talk.Messages.Connector do
   end
 
   defp build_base_query(query, %Group{id: group_id}) do
+    Logger.warn("1111111")
     Messages.Query.where_in_group(query, group_id)
   end
 
@@ -160,6 +162,13 @@ defmodule Talk.Messages.Connector do
   end
 
   defp apply_recipients(base_query, _), do: base_query
+
+  defp apply_in_group(base_query, %{filter: %{group_id: group_id}}) do
+    Logger.warn("22222")
+    Messages.Query.where_in_group(base_query, group_id)
+  end
+
+  defp apply_in_group(base_query, _), do: base_query
 
   defp apply_type(base_query, %{filter: %{type: :direct}}) do
     Messages.Query.where_type_direct(base_query)

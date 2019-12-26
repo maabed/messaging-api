@@ -191,14 +191,14 @@ defmodule TalkWeb.Resolver.Messages do
         err
     end
   end
-  
+
   @spec read_state(Message.t(), map(), info()) :: :message_user_state | nil
   def read_state(%Message{id: id, user_id: user_id} = _message, _args, _info) do
     with {:ok, group} <- Groups.get_group_by_message_id(user_id, id),
          {:ok, read_state} <- Messages.get_read_state(group, id, user_id)
          do
       {:ok, read_state}
-      
+
     else
       {:error, changeset} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}

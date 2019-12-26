@@ -165,6 +165,9 @@ defmodule TalkWeb.Type.Message do
 
     @desc "Filter by recipients username."
     field :recipients, list_of(:string), default_value: []
+
+    @desc "Filter by group id."
+    field :group_id, :id
   end
 
   input_object :reaction_order do

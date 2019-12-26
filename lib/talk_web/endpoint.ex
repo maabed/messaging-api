@@ -18,7 +18,7 @@ defmodule TalkWeb.Endpoint do
     at: "/",
     from: :talk,
     gzip: true,
-    only: ~w(css fonts images js favicon.ico robots.txt),
+    only: ~w(robots.txt),
     headers: [{"access-control-allow-origin", "*"}]
 
   # Code reloading can be explicitly enabled under the
