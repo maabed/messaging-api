@@ -10,7 +10,7 @@ defmodule TalkWeb.Type.Message do
 
   object :message do
     field :id, non_null(:id)
-    field :body, non_null(:string)
+    field :content, non_null(:string)
     field :files, list_of(:file), resolve: dataloader(:db)
     field :state, non_null(:message_state)
     field :groups, list_of(:group), resolve: dataloader(:db)
@@ -90,7 +90,7 @@ defmodule TalkWeb.Type.Message do
   # message mutations
   object :message_mutations do
     field :create_message, type: :message_mutation_response do
-      arg :body, non_null(:string)
+      arg :content, non_null(:string)
       arg :group_id, non_null(:id)
       arg :file_ids, list_of(:id)
       arg :is_request, :boolean
@@ -100,7 +100,7 @@ defmodule TalkWeb.Type.Message do
 
     field :update_message, type: :message_mutation_response do
       arg :message_id, non_null(:id)
-      arg :body, :string
+      arg :content, :string
       arg :is_request, :boolean
       resolve &Resolver.update_message/2
     end

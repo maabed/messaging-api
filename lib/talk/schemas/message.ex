@@ -10,7 +10,7 @@ defmodule Talk.Schemas.Message do
   @type t :: %__MODULE__{}
   @timestamps_opts [type: :utc_datetime_usec]
   schema "messages" do
-    field :body, :string
+    field :content, :string
     field :is_request, :boolean, default: false
     field :state, :string, read_after_writes: true
     field :type, :string, read_after_writes: true
@@ -31,13 +31,13 @@ defmodule Talk.Schemas.Message do
 
   def create_changeset(message, attrs) do
     message
-    |> cast(attrs, [:user_id, :body])
-    |> validate_required([:body])
+    |> cast(attrs, [:user_id, :content])
+    |> validate_required([:content])
   end
 
   def update_changeset(struct, attrs \\ %{}) do
     struct
-    |> cast(attrs, [:body, :is_request])
-    |> validate_required([:body, :is_request])
+    |> cast(attrs, [:content, :is_request])
+    |> validate_required([:content, :is_request])
   end
 end
