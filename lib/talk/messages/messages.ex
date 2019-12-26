@@ -7,6 +7,7 @@ defmodule Talk.Messages do
   alias Talk.Repo
   alias Ecto.Changeset
   alias Talk.{Events, Messages}
+  alias TalkWeb.Resolver.Helpers
   alias Talk.Messages.{CreateMessage, UpdateMessage}
   alias Talk.Schemas.{
     File,
@@ -325,25 +326,35 @@ defmodule Talk.Messages do
   defp after_update_user_state({:ok, _}), do: :ok
   defp after_update_user_state(_), do: :error
 
-  
   @spec get_read_state(Group.t(), String.t(), String.t()) :: :message_user_state | nil
   def get_read_state(group, id, user_id) do
-    case get_message_read_state(group, id, user_id) do
-      {:ok, %MessageGroup{read_state: "READ"}} -> {:ok, true}
-      {:ok, %MessageGroup{read_state: "UNREAD"}} -> {:ok, false}
-      _ -> nil
+    get_message_read_state(group, id, user_id) |> IO.inspect
+    with {:ok, message_groups} <- get_message_read_state(group, id, user_id) do
+      {:ok, message_groups}
+    else
+      {:error, changeset} ->
+        {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+ 
+      err ->
+        err
     end
   end
 
   @spec get_message_read_state(Group.t(), String.t(), String.t()) :: {:ok, MessageGroup.t() | nil}
-  def get_message_read_state(%Group{id: group_id}, message_id, user_id) do
-    MessageGroup
-    |> Repo.get_by(user_id: user_id, group_id: group_id, message_id: message_id)
-    |> handle_get_message_read_state()
+  def get_message_read_state(%Group{id: group_id}, message_id, _user_id) do
+    query = from mg in MessageGroup,
+      join: u in assoc(mg, :user),
+      where: mg.group_id == ^group_id,
+      where: mg.read_state == "READ",
+      where: mg.message_id == ^message_id
+
+    query
+      |> Repo.all
+      |> IO.inspect
+      |> handle_get_message_read_state
   end
 
-  defp handle_get_message_read_state(%MessageGroup{} = message_group), do: {:ok, message_group}
-  defp handle_get_message_read_state(_), do: {:ok, nil}
+  defp handle_get_message_read_state(message_groups), do: {:ok, message_groups}
 end
 
 

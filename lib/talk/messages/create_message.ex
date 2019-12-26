@@ -44,9 +44,9 @@ defmodule Talk.Messages.CreateMessage do
       params = %{
         message_id: message.id,
         group_id: group.id,
-        user_id: user.id
+        read_state: "READ",
+        user_id: user.id,
       }
-
       %MessageGroup{}
       |> Ecto.Changeset.change(params)
       |> Repo.insert(on_conflict: :nothing)
@@ -72,9 +72,9 @@ defmodule Talk.Messages.CreateMessage do
     end)
   end
 
-  defp after_insert_message({:ok, %{message: message} = result}, group, user, params) do
-    subscribe_recipients(message, user, group, params)
-    subscribe_group_users(message, result)
+  defp after_insert_message({:ok, %{message: message} = result}, user, group, params) do
+    subscribe_recipients(message, group, user, params)
+    subscribe_group_users(message, result, user)
     send_events(message)
 
     {:ok, result}
@@ -84,7 +84,7 @@ defmodule Talk.Messages.CreateMessage do
 
   defp subscribe_recipients(_message, _group, _user, %{recipient_usernames: []}), do: nil
 
-  defp subscribe_recipients(message, group, _user, %{recipient_usernames: usernames}) do
+  defp subscribe_recipients(message, group, user, %{recipient_usernames: usernames}) do
     query =
       from u in User,
         where: u.username in ^usernames
@@ -92,18 +92,26 @@ defmodule Talk.Messages.CreateMessage do
     recipients = Repo.all(query)
 
     Enum.each(recipients, fn recipient ->
-      Messages.mark_as_unread(recipient, group, [message])
+      if recipient.id === user.id do
+        Messages.mark_as_read(recipient, group, [message])
+      else
+        Messages.mark_as_unread(recipient, group, [message])
+      end
     end)
   end
 
   defp subscribe_recipients(_message, _group, _user, _params), do: nil
 
-  defp subscribe_group_users(message, %{groups: group}) do
+  defp subscribe_group_users(message, %{groups: group}, user) do
     {:ok, group_users} = Groups.list_members(group)
     group_users = Repo.preload(group_users, :user)
 
     Enum.each(group_users, fn group_user ->
-      Messages.mark_as_unread(group_user.user, group, [message])
+      if group_user.user.id === user.id do
+        Messages.mark_as_read(group_user.user, group, [message])
+      else
+        Messages.mark_as_unread(group_user.user, group, [message])
+      end
     end)
   end
 

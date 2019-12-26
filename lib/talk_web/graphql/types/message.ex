@@ -17,7 +17,6 @@ defmodule TalkWeb.Type.Message do
     field :sender, non_null(:user), resolve: &Resolver.message_sender/3
     field :is_request, non_null(:boolean)
     field :recipients, list_of(:group_user), resolve: &Resolver.list_recipients/3
-    field :is_read, non_null(:boolean), resolve: &Resolver.read_state/3
     field :updated_at, non_null(:timestamp)
     field :inserted_at, non_null(:timestamp)
 
@@ -34,6 +33,10 @@ defmodule TalkWeb.Type.Message do
       resolve &Resolver.can_edit_message/3
     end
 
+    field :readers, list_of(:reader) do
+      resolve &Resolver.read_state/3
+    end
+
     field :last_activity_at, non_null(:timestamp) do
       resolve fn
         %Message{last_activity_at: last_activity_at}, _, _ when not is_nil(last_activity_at) ->
@@ -43,6 +46,11 @@ defmodule TalkWeb.Type.Message do
           Messages.last_activity_at(message)
       end
     end
+  end
+
+  object :reader do
+    field :read_state, non_null(:string)
+    field :user, non_null(:user), resolve: dataloader(:db)
   end
 
   object :message_reaction do
