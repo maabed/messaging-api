@@ -12,6 +12,7 @@ defmodule Talk.Groups.Connector do
             before: nil,
             after: nil,
             state: :open,
+            search_term: :nil,
             order_by: %{
               field: :name,
               direction: :asc
@@ -23,6 +24,7 @@ defmodule Talk.Groups.Connector do
           before: String.t() | nil,
           after: String.t() | nil,
           state: :open | :closed | :deleted | :all,
+          search_term: String.t() | nil,
           order_by: %{
             field: :name | :inserted_at,
             direction: :asc | :desc
@@ -31,9 +33,18 @@ defmodule Talk.Groups.Connector do
 
   def get(args, %{context: %{user: user}}) do
     user
-    |> Groups.groups_base_query()
+    |> Groups.Query.base_query()
+    |> apply_search_filter(args)
     |> apply_state_filter(args)
     |> Pagination.fetch_result(Args.build(args))
+  end
+
+  defp apply_search_filter(query, %{search_term: nil}), do: query
+  defp apply_search_filter(query, %{search_term: search_term}) when search_term === "", do: query
+  defp apply_search_filter(query, %{search_term: search_term}) when not is_binary(search_term), do: query
+
+  defp apply_search_filter(query, %{search_term: search_term}) do
+    Groups.Query.search_query(query, search_term)
   end
 
   defp apply_state_filter(query, %{state: :open}) do

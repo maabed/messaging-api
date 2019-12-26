@@ -133,6 +133,7 @@ defmodule TalkWeb.Type.Group do
       arg :last, :integer
       arg :before, :timestamp
       arg :after, :timestamp
+      arg :search_term, :string
       arg :order_by, :group_order
       arg :state, :group_state_filter, default_value: :open
       resolve &GroupResolver.groups/2

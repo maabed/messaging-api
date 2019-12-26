@@ -53,4 +53,17 @@ defmodule Talk.Groups.Query do
     #     distinct: gu.user_id,
     #     select: gu.user_id
   end
+
+  @spec search_query(User.t(), [String.t()]) :: Ecto.Query.t()
+  def search_query(query, search_term) do
+    term = "%" <> search_term <> "%"
+
+    from [g, u, gu] in query,
+      join: gu2 in GroupUser,
+      on: gu.id != gu2.id and gu.group_id == gu2.group_id,
+      join: u2 in assoc(gu2, :user),
+      on: u2.id == gu2.user_id,
+      where: ilike(u2.display_name, ^term) or ilike(u2.username, ^term),
+      distinct: true
+  end
 end
