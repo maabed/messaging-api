@@ -134,7 +134,9 @@ defmodule Talk.Messages do
       UserLog.marked_as_read(m, user)
     end)
 
-    Events.messages_marked_as_read(user.id, messages)
+    {:ok, user_ids} = Messages.get_accessor_ids(Enum.at(messages, 0))
+
+    Events.messages_marked_as_read(user_ids, messages)
     result
   end
 

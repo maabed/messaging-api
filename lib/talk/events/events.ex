@@ -55,8 +55,8 @@ defmodule Talk.Events do
     publish_to_many_users(ids, :message_deleted, %{message: message})
   end
 
-  def messages_marked_as_read(id, messages) do
-    publish_to_user(id, :messages_marked_as_read, %{messages: messages})
+  def messages_marked_as_read(ids, messages) do
+    publish_to_many_users(ids, :messages_marked_as_read, %{messages: messages})
   end
 
   def messages_marked_as_unread(id, messages) do
