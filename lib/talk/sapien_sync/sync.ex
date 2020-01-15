@@ -9,7 +9,7 @@ defmodule Talk.SapienDB.Sync do
       COPY (SELECT
         p."userId" AS id,
         p."_id" AS profile_id,
-        display_name,
+        p."displayName" AS display_name,
         email,
         username,
         thumbnail->>'avatar' AS avatar,
