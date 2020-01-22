@@ -2,10 +2,10 @@ defmodule TalkWeb.Type.User do
   @moduledoc "GraphQL types for users"
 
   use Absinthe.Schema.Notation
+  import Absinthe.Resolution.Helpers
 
-  alias Talk.AssetStore
-  alias TalkWeb.Resolver.Users, as: UserResolver
   alias Talk.Groups
+  alias TalkWeb.Resolver.Users, as: UserResolver
 
   object :user do
     field :id, non_null(:id)
@@ -15,8 +15,15 @@ defmodule TalkWeb.Type.User do
     field :profile_id, non_null(:string)
     field :inserted_at, non_null(:timestamp)
     field :updated_at, non_null(:timestamp)
+    field :profile, non_null(:profile), resolve: dataloader(:db)
+    field :avatar, :string, resolve: &UserResolver.avatar_url/3
+    field :bookmarks, list_of(:group) do
+      resolve fn user, _, %{context: %{user: current_user}} ->
+        Groups.list_bookmarks(user, current_user)
+      end
+    end
 
-    field :followers, non_null(:user_pagination) do
+    field :followers, non_null(:follower_pagination) do
       arg :first, :integer
       arg :last, :integer
       arg :before, :timestamp
@@ -24,26 +31,15 @@ defmodule TalkWeb.Type.User do
       arg :order_by, :user_order
       resolve &UserResolver.followers/3
     end
+  end
 
-    field :bookmarks, list_of(:group) do
-      resolve fn user, _args, %{context: %{user: user}} ->
-        if user.user_id == user.id do
-          {:ok, Groups.list_bookmarks(user)}
-        else
-          {:ok, nil}
-        end
-      end
-    end
-
-    field :avatar, :string do
-      resolve fn user, _, _ ->
-        if user.avatar do
-          {:ok, AssetStore.avatar_url(user.avatar)}
-        else
-          {:ok, nil}
-        end
-      end
-    end
+  object :profile do
+    field :id, non_null(:id)
+    field :user_id, non_null(:id)
+    field :username, non_null(:string)
+    field :display_name, non_null(:string)
+    field :avatar, :string, resolve: &UserResolver.avatar_url/3
+    interface :profile_entity
   end
 
   object :user_queries do
@@ -53,28 +49,36 @@ defmodule TalkWeb.Type.User do
       arg :profile_id, :string
       resolve &UserResolver.user/2
     end
-  end
 
-  object :user_mutations do
-    field :update_user, type: :update_user_response do
-      arg :display_name, :string
-      arg :username, :string
-      arg :email, :string
-      arg :time_zone, :string
-      resolve &UserResolver.update_user/2
-    end
-
-    field :update_user_avatar, type: :update_user_response do
-      arg :data, non_null(:string)
-      resolve &UserResolver.update_user_avatar/2
+    field :users_search, list_of(:profile_pagination) do
+      arg :first, :integer
+      arg :last, :integer
+      arg :before, :timestamp
+      arg :after, :timestamp
+      arg :order_by, :user_order
+      arg :term, non_null(:string)
+      resolve &UserResolver.search/2
     end
   end
 
-  object :update_user_response do
-    interface :response
-    field :success, non_null(:boolean)
-    field :errors, list_of(:error)
-    field :user, :user
+  object :user_search_result do
+    field :id, non_null(:id)
+    field :user_id, non_null(:id)
+    field :username, non_null(:string)
+    field :display_name, non_null(:string)
+    field :avatar, :string, resolve: &UserResolver.avatar_url/3
+    field :is_following, :boolean, resolve: &UserResolver.is_following/3
+    field :rank, :float
+    interface :profile_entity
+  end
+
+  interface :profile_entity do
+    field :id, non_null(:id)
+    field :user_id, non_null(:id)
+    field :username, non_null(:string)
+    field :display_name, non_null(:string)
+    field :avatar, :string
+    resolve_type fn _, _ -> nil end
   end
 
   input_object :user_order do

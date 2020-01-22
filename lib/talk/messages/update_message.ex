@@ -6,7 +6,7 @@ defmodule Talk.Messages.UpdateMessage do
   alias Talk.Repo
   alias Ecto.Multi
   alias Talk.{Events, Messages}
-  alias Talk.Schemas.{Message, User, UserLog}
+  alias Talk.Schemas.{Message, MessageLog, User}
 
   @spec perform(User.t(), Message.t(), map()) :: {:ok, %{message: Message.t()}}
       | {:error, :unauthorized} | {:error, atom(), any(), map()}
@@ -53,13 +53,13 @@ defmodule Talk.Messages.UpdateMessage do
 
   defp log(multi, user) do
     Multi.run(multi, :log, fn _repo, %{updated_message: message} ->
-      UserLog.message_edited(message, user)
+      MessageLog.message_edited(message, user.profile)
     end)
   end
 
   defp after_update_message({:ok, %{updated_message: message} = result}) do
-    {:ok, user_ids} = Messages.get_accessor_ids(message)
-    Events.message_updated(user_ids, message)
+    {:ok, profile_ids} = Messages.get_accessor_ids(message)
+    Events.message_updated(profile_ids, message)
     {:ok, result}
   end
 

@@ -3,7 +3,7 @@ defmodule Talk.Events do
   This module encapsulates behavior for publishing messages to listeners
   """
   require Logger
-  alias Talk.Schemas.{Group, Message, MessageReaction, User}
+  alias Talk.Schemas.{Group, Message, MessageReaction, Profile}
 
   # group events
   def group_created(ids, %Group{} = group) do
@@ -26,20 +26,20 @@ defmodule Talk.Events do
     publish_to_user(id, :group_unbookmarked, %{group: group})
   end
 
-  def subscribed_to_group(id, %Group{} = group, %User{} = user) do
-    publish_to_group(id, :subscribed_to_group, %{group: group, user: user})
+  def subscribed_to_group(id, %Group{} = group, %Profile{} = profile) do
+    publish_to_group(id, :subscribed_to_group, %{group: group, profile: profile})
   end
 
-  def unsubscribed_from_group(id, %Group{} = group, %User{} = user) do
-    publish_to_group(id, :unsubscribed_from_group, %{group: group, user: user})
+  def unsubscribed_from_group(id, %Group{} = group, %Profile{} = profile) do
+    publish_to_group(id, :unsubscribed_from_group, %{group: group, profile: profile})
   end
 
-  def group_muted(id, %Group{} = group, %User{} = user) do
-    publish_to_group(id, :group_muted, %{group: group, user: user})
+  def group_muted(id, %Group{} = group, %Profile{} = profile) do
+    publish_to_group(id, :group_muted, %{group: group, profile: profile})
   end
 
-  def group_archived(id, %Group{} = group, %User{} = user) do
-    publish_to_group(id, :group_archived, %{group: group, user: user})
+  def group_archived(id, %Group{} = group, %Profile{} = profile) do
+    publish_to_group(id, :group_archived, %{group: group, profile: profile})
   end
 
   # message events
@@ -85,8 +85,6 @@ defmodule Talk.Events do
   end
 
   defp publish(payload, topics) do
-    # Logger.debug "publishing user event topics: #{inspect topics}"
-    # Logger.debug "publishing user event payload: #{inspect payload}"
     Absinthe.Subscription.publish(TalkWeb.Endpoint, payload, topics)
   end
 end

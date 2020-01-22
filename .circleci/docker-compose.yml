@@ -1,0 +1,46 @@
+version: '3.7'
+services:
+  talk:
+    image: $FULL_IMAGE_NAME
+    container_name: local-talk
+    ports:
+      - "$PORT_VALUE:$PORT_VALUE"
+    environment:
+      - PORT=$PORT_VALUE
+      - HOST=$HOST_VALUE
+      - POOL_SIZE=18
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_HOSTNAME=db
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+      - SECRET_KEY_BASE=$SECRET_KEY_BASE_VALUE
+      - ASSET_STORE_BUCKET=$ASSET_STORE_BUCKET_VALUE
+      - ASSET_AVATAR_BUCKET=$ASSET_AVATAR_BUCKET_VALUE
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_VALUE
+      - AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY_VALUE
+    networks:
+      sapien-local:
+        ipv4_address: 172.24.0.5
+    depends_on:
+      - db
+  db:
+    image: postgres:11-alpine
+    container_name: local-db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_HOSTNAME=db
+    networks:
+      sapien-local:
+        ipv4_address: 172.24.0.6
+networks:
+  sapien-local:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.24.0.0/16

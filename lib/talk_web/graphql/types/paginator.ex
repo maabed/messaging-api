@@ -39,6 +39,32 @@ defmodule TalkWeb.Type.Paginator do
     field :total_count, non_null(:integer)
   end
 
+  @desc "An edge in the followers."
+  object :follower_edge do
+    field :node, :profile
+    field :cursor, non_null(:timestamp)
+  end
+
+  @desc "A list of followers"
+  object :follower_pagination do
+    field :edges, list_of(:follower_edge)
+    field :page_info, non_null(:page_info)
+    field :total_count, non_null(:integer)
+  end
+
+  @desc "An edge in the followers."
+  object :profile_edge do
+    field :node, :user_search_result
+    field :cursor, non_null(:timestamp)
+  end
+
+  @desc "A list of profiles"
+  object :profile_pagination do
+    field :edges, list_of(:profile_edge)
+    field :page_info, non_null(:page_info)
+    field :total_count, non_null(:integer)
+  end
+
   @desc "group edge."
   object :group_edge do
     field :node, :group

@@ -10,33 +10,17 @@ defmodule TalkWeb.Type.Message do
 
   object :message do
     field :id, non_null(:id)
-    field :content, non_null(:string)
-    field :files, list_of(:file), resolve: dataloader(:db)
-    field :state, non_null(:message_state)
+    field :content, :string
+    field :media, :media
+    field :status, non_null(:message_status)
     field :groups, list_of(:group), resolve: dataloader(:db)
     field :sender, non_null(:user), resolve: &Resolver.message_sender/3
     field :is_request, non_null(:boolean)
     field :recipients, list_of(:group_user), resolve: &Resolver.list_recipients/3
     field :updated_at, non_null(:timestamp)
     field :inserted_at, non_null(:timestamp)
-
-    field :reactions, non_null(:message_reaction_pagination) do
-      arg :first, :integer
-      arg :last, :integer
-      arg :before, :timestamp
-      arg :after, :timestamp
-      arg :order_by, :reaction_order
-      resolve &Resolver.reactions/3
-    end
-
-    field :can_edit, non_null(:boolean) do
-      resolve &Resolver.can_edit_message/3
-    end
-
-    field :readers, list_of(:reader) do
-      resolve &Resolver.read_state/3
-    end
-
+    field :can_edit, non_null(:boolean), resolve: &Resolver.can_edit_message/3
+    field :readers, list_of(:reader), resolve: &Resolver.read_status/3
     field :last_activity_at, non_null(:timestamp) do
       resolve fn
         %Message{last_activity_at: last_activity_at}, _, _ when not is_nil(last_activity_at) ->
@@ -46,11 +30,33 @@ defmodule TalkWeb.Type.Message do
           Messages.last_activity_at(message)
       end
     end
+
+    field :reactions, non_null(:message_reaction_pagination) do
+      arg :first, :integer
+      arg :last, :integer
+      arg :before, :timestamp
+      arg :after, :timestamp
+      arg :order_by, :reaction_order
+      resolve &Resolver.reactions/3
+    end
+  end
+
+  object :media do
+    field :id, non_null(:id)
+    field :url, non_null(:string)
+    field :size, :integer
+    field :type, :string
+    field :filename, non_null(:string)
+    field :extension, non_null(:string)
+    field :inserted_at, non_null(:time)
   end
 
   object :reader do
-    field :read_state, non_null(:string)
-    field :user, non_null(:user), resolve: dataloader(:db)
+    field :read_status, non_null(:string)
+    field :profile_id, non_null(:string)
+    field :user_id, non_null(:string)
+    field :username, non_null(:string)
+    # field :profile, non_null(:profile), resolve: dataloader(:db)
   end
 
   object :message_reaction do
@@ -98,10 +104,11 @@ defmodule TalkWeb.Type.Message do
   # message mutations
   object :message_mutations do
     field :create_message, type: :message_mutation_response do
-      arg :content, non_null(:string)
+      arg :content, :string
       arg :group_id, non_null(:id)
-      arg :file_ids, list_of(:id)
       arg :is_request, :boolean
+      arg :media, :upload
+      arg :media_id, :string
       arg :recipient_usernames, list_of(:string)
       resolve &Resolver.create_message/2
     end
@@ -150,20 +157,20 @@ defmodule TalkWeb.Type.Message do
 
   @desc "Filtering criteria for message connector."
   input_object :message_filters do
-    @desc "Filter by subscription states."
-    field :subscribe_state, :subscribe_state_filter, default_value: :all
+    @desc "Filter by subscription statuss."
+    field :subscribe_status, :subscribe_status_filter, default_value: :all
 
-    @desc "Filter by read states."
-    field :read_state, :read_state_filter, default_value: :all
+    @desc "Filter by read statuss."
+    field :read_status, :read_status_filter, default_value: :all
 
-    @desc "Filter by message states."
-    field :state, :message_state_filter, default_value: :all
+    @desc "Filter by message statuss."
+    field :status, :message_status_filter, default_value: :all
 
     @desc "Filter by last activity."
     field :last_activity, :last_activity_filter, default_value: :all
 
     @desc "Filter by whether the message is a request."
-    field :request_state, :request_state_filter, default_value: :all
+    field :request_status, :request_status_filter, default_value: :all
 
     @desc "Filter by group type."
     field :type, :type_filter, default_value: :all

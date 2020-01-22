@@ -6,8 +6,10 @@ defmodule Talk.Repo.Migrations.InstallGgTrgm do
 
   def up do
     execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
-    execute("CREATE INDEX users_username_trgm ON users USING GIN (username gin_trgm_ops)")
-    execute("CREATE INDEX users_display_name_trgm ON users USING GIN (display_name gin_trgm_ops)")
+    execute("CREATE INDEX IF NOT EXISTS users_username_trgm ON profiles USING GIN (username gin_trgm_ops)")
+    execute("""
+      CREATE INDEX IF NOT EXISTS users_display_name_trgm ON profiles USING GIN ("displayName" gin_trgm_ops)
+    """)
   end
 
   def down do

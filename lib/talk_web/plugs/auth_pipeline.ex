@@ -13,6 +13,7 @@ defmodule TalkWeb.Plug.AuthPipeline do
   plug Guardian.Plug.LoadResource, allow_blank: true
   plug TalkWeb.Plug.CurrentUser
   plug TalkWeb.Plug.Graphql
+  # plug TalkWeb.Plug.ConnInterceptor # good for debugging
 
   def auth_error(conn, {type, _reason}, _opts) do
     body = Jason.encode!(%{message: to_string(type)})

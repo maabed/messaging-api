@@ -3,17 +3,23 @@ defmodule Talk.Repo.Migrations.CreateGroups do
   use Ecto.Migration
 
   def up do
-    execute("CREATE TYPE group_state AS ENUM ('OPEN','CLOSED','DELETED')")
+    # execute("CREATE EXTENSION IF NOT EXISTS citext")
+    execute """
+      DO $$ BEGIN
+        CREATE TYPE group_status AS ENUM ('OPEN','CLOSED','DELETED');
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END $$;
+    """
 
     create table(:groups) do
       add :name, :string
       add :description, :text
       add :picture, :text
-      add :state, :group_state, default: "OPEN", null: false
+      add :status, :group_status, default: "OPEN", null: false
       add :is_private, :boolean, default: true, null: false
       add :last_message_id, :binary_id
-
-      add :user_id, references(:users, type: :string), null: false
+      add :profile_id, references(:profiles, type: :string, column: :_id), null: false
 
       timestamps()
     end
@@ -22,6 +28,6 @@ defmodule Talk.Repo.Migrations.CreateGroups do
 
   def down do
     drop table(:groups)
-    execute("DROP TYPE group_state")
+    execute("DROP TYPE group_status")
   end
 end

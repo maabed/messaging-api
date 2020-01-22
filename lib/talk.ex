@@ -7,7 +7,6 @@ defmodule Talk do
     import Supervisor.Spec
     children = [
       supervisor(Talk.Repo, []),
-      supervisor(Talk.SapienRepo, []),
       supervisor(TalkWeb.Endpoint, []),
       supervisor(TalkWeb.Presence, []),
       supervisor(Absinthe.Subscription, [TalkWeb.Endpoint])

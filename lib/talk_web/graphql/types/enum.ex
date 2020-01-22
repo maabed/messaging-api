@@ -3,13 +3,13 @@ defmodule TalkWeb.Type.Enum do
 
   use Absinthe.Schema.Notation
 
-  enum :group_state do
+  enum :group_status do
     value :open, as: "OPEN"
     value :closed, as: "CLOSED"
     value :deleted, as: "DELETED"
   end
 
-  enum :group_user_state do
+  enum :group_user_status do
     value :muted, as: "MUTED"
     value :archived, as: "ARCHIVED"
     value :subscribed, as: "SUBSCRIBED"
@@ -22,31 +22,31 @@ defmodule TalkWeb.Type.Enum do
     value :member, as: "MEMBER"
   end
 
-  enum :message_state do
+  enum :message_status do
     value :valid, as: "VALID"
     value :expired, as: "EXPIRED"
     value :deleted, as: "DELETED"
   end
 
-  enum :message_user_state do
+  enum :message_read_status do
     value :read, as: "READ"
     value :unread, as: "UNREAD"
   end
 
-  enum :read_state_filter do
+  enum :read_status_filter do
     value :read
     value :unread
     value :all
   end
 
-  enum :message_state_filter do
+  enum :message_status_filter do
     value :valid
     value :expired
     value :deleted
     value :all
   end
 
-  enum :group_state_filter do
+  enum :group_status_filter do
     value :open
     value :closed
     value :deleted
@@ -58,7 +58,7 @@ defmodule TalkWeb.Type.Enum do
     value :all
   end
 
-  enum :subscribe_state_filter do
+  enum :subscribe_status_filter do
     value :subscribed
     value :unsubscribed
     value :all
@@ -70,7 +70,7 @@ defmodule TalkWeb.Type.Enum do
     value :all
   end
 
-  enum :request_state_filter do
+  enum :request_status_filter do
     value :follower
     value :request
     value :all
@@ -79,6 +79,7 @@ defmodule TalkWeb.Type.Enum do
   enum :user_order_field do
     value :username
     value :inserted_at
+    value :rank
   end
 
   enum :group_order_field do

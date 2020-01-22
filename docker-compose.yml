@@ -1,0 +1,52 @@
+version: '3.7'
+services:
+  db:
+    image: postgres:11-alpine
+    container_name: local-db
+    hostname: db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=sapien
+      - POSTGRES_PASSWORD=sapien
+      - POSTGRES_DB=sapien
+      - POSTGRES_HOSTNAME=db
+    volumes:
+      - ./priv/docker/init_sapien_db.sql:/docker-entrypoint-initdb.d/init_sapien_db.sql
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      sapien-local:
+        ipv4_address: 172.26.0.6
+  app:
+    image: sapien-talk
+    container_name: local-talk
+    build: .
+    ports:
+      - 7000:7000
+    env_file:
+      - .env_docker
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - build:/mix/build
+      - ./deps:/mix/deps
+      - ./config:/app/config
+      - ./lib:/app/lib
+      - ./priv:/app/priv
+      - ./.credo.exs:/app/.credo.exs
+      - ./mix.exs:/app/mix.exs
+      - ./mix.lock:/app/mix.lock
+    networks:
+      sapien-local:
+        ipv4_address: 172.26.0.5
+volumes:
+  build: {}
+  pgdata: {}
+networks:
+  sapien-local:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.26.0.0/16

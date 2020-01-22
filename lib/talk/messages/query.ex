@@ -4,55 +4,61 @@ defmodule Talk.Messages.Query do
   import Ecto.Query
   require Logger
 
-  alias Talk.Schemas.{GroupUser, Message, MessageGroup, User, UserLog}
+  alias Talk.Schemas.{GroupUser, Message, MessageGroup, MessageLog, Profile, User}
 
   @spec base_query(User.t()) :: Ecto.Query.t()
-  def base_query(%User{id: user_id}) do
+  def base_query(%User{profile_id: profile_id}) do
     query =
       from m in Message,
-        join: u in User,
-        on: u.id == ^user_id
+        join: p in Profile,
+        on: p.id == ^profile_id
 
-    base_query_with_user(query, user_id)
+    base_query_with_user(query, profile_id)
   end
 
-  defp base_query_with_user(query, user_id) do
-    from [m, u] in query,
+  defp base_query_with_user(query, profile_id) do
+    from [m, p] in query,
       left_join: g in assoc(m, :groups),
       left_join: gu in GroupUser,
-      on: gu.user_id == u.id and gu.group_id == g.id,
+      on: gu.profile_id == p.id and gu.group_id == g.id,
       left_join: mg in assoc(m, :message_groups),
       # left_join: mg in MessageGroup,
-      on: mg.user_id == u.id, # and mg.group_id == gu.group_id,
-      where: gu.user_id == ^user_id and m.state != "DELETED" and g.is_private == true,
+      on: mg.profile_id == p.id, # and mg.group_id == gu.group_id,
+      where: gu.profile_id == ^profile_id and m.status != "DELETED" and g.is_private == true,
       distinct: m.id
   end
 
   @spec where_in_group(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
+  def where_in_specific_group(query, group_id) do
+    from [m, p, g, gu] in query,
+      where: g.id == ^group_id
+  end
+
+  @spec where_in_group(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
   def where_in_group(query, group_id) do
-    from [m, u, g, gu] in query,
+    from [m, p, g, gu] in query,
       where: g.id == ^group_id
   end
 
   @spec select_last_activity_at(Ecto.Query.t()) :: Ecto.Query.t()
   def select_last_activity_at(query) do
-    from [m, u, g, gu] in query,
-      left_join: ul in UserLog,
-      on: ul.message_id == m.id,
+    from [m, p, g, gu] in query,
+      left_join: ml in MessageLog,
+      on: ml.message_id == m.id,
       group_by: m.id,
-      select_merge: %{last_activity_at: max(ul.happen_at)}
+      select_merge: %{last_activity_at: max(ml.happen_at)}
   end
 
   @spec where_last_active_today(Ecto.Query.t(), DateTime.t()) :: Ecto.Query.t()
   def where_last_active_today(query, now) do
     where(
       query,
-      [m, u, g, gu, ul],
+      [m, p, g, gu, ml],
       fragment(
         "date_trunc('day', timezone(?, ?::timestamptz)) = date_trunc('day', timezone(?, ?))",
-        u.time_zone,
-        ul.happen_at,
-        u.time_zone,
+        p.time_zone,
+        ml.happen_at,
+        p.time_zone,
         ^now
       )
     )
@@ -60,82 +66,82 @@ defmodule Talk.Messages.Query do
 
   @spec where_last_active_after(Ecto.Query.t(), DateTime.t()) :: Ecto.Query.t()
   def where_last_active_after(query, timestamp) do
-    from [m, u, g, gu, ul] in query,
-      where: ul.happen_at >= ^timestamp
+    from [m, p, g, gu, ml] in query,
+      where: ml.happen_at >= ^timestamp
   end
 
   @spec where_valid(Ecto.Query.t()) :: Ecto.Query.t()
   def where_valid(query) do
-    where(query, [m, u, g, gu], m.state == "VALID")
+    where(query, [m, p, g, gu], m.status == "VALID")
   end
 
   @spec where_expired(Ecto.Query.t()) :: Ecto.Query.t()
   def where_expired(query) do
-    where(query, [m, u, g, gu], m.state == "EXPIRED")
+    where(query, [m, p, g, gu], m.status == "EXPIRED")
   end
 
   @spec where_deleted(Ecto.Query.t()) :: Ecto.Query.t()
   def where_deleted(query) do
-    where(query, [m, u, g, gu], m.state == "DELETED")
+    where(query, [m, p, g, gu], m.status == "DELETED")
   end
 
   @spec where_read(Ecto.Query.t()) :: Ecto.Query.t()
   def where_read(query) do
-    where(query, [m, u, g, gu, mg], mg.read_state == "READ")
+    where(query, [m, p, g, gu, mg], mg.read_status == "READ")
   end
 
   @spec where_unread(Ecto.Query.t()) :: Ecto.Query.t()
   def where_unread(query) do
-    where(query, [m, u, g, gu, mg], mg.read_state == "UNREAD")
+    where(query, [m, p, g, gu, mg], mg.read_status == "UNREAD")
   end
 
   @spec where_is_follower(Ecto.Query.t()) :: Ecto.Query.t()
   def where_is_follower(query) do
-    where(query, [m, u, g, gu], m.is_request == false)
+    where(query, [m, p, g, gu], m.is_request == false)
   end
 
   @spec where_is_request(Ecto.Query.t()) :: Ecto.Query.t()
   def where_is_request(query) do
-    where(query, [m, u, g, gu], m.is_request == true)
+    where(query, [m, p, g, gu], m.is_request == true)
   end
 
   @spec where_subscribed(Ecto.Query.t()) :: Ecto.Query.t()
   def where_subscribed(query) do
-    from [m, u, g, gu] in query,
-      where: gu.state == "SUBSCRIBED",
+    from [m, p, g, gu] in query,
+      where: gu.status == "SUBSCRIBED",
       group_by: m.id
   end
 
   @spec where_unsubscribed(Ecto.Query.t()) :: Ecto.Query.t()
   def where_unsubscribed(query) do
-    from [m, u, g, gu] in query,
-      where: gu.state == "UNSUBSCRIBED",
+    from [m, p, g, gu] in query,
+      where: gu.status == "UNSUBSCRIBED",
       group_by: m.id
   end
 
   @spec where_sent_by(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
   def where_sent_by(query, username) do
     from m in query,
-      left_join: u in assoc(m, :user),
-      where: u.username == ^username
+      left_join: p in assoc(m, :profile),
+      where: p.username == ^username
   end
 
   @spec where_specific_recipients(Ecto.Query.t(), [String.t()]) :: Ecto.Query.t()
   def where_specific_recipients(query, usernames) do
     base_query =
-      from [m, u, g, gu, mg] in query,
+      from [m, p, g, gu, mg] in query,
         join: mg2 in MessageGroup,
         on: mg2.message_id == m.id,
-        left_join: u2 in User,
-        on: u2.id == mg2.user_id,
+        left_join: p2 in Profile,
+        on: p2.id == mg2.profile_id,
         where: g.id == mg2.group_id,
-        where: m.user_id != mg2.user_id,
+        where: m.profile_id != mg2.profile_id,
         group_by: m.id,
-        select_merge: %{recipient_username: fragment("array_agg(?)", u2.username)}
+        select_merge: %{recipient_username: fragment("array_agg(?)", p2.username)}
 
     from m in subquery(base_query),
-      # where: fragment("? @> ?::citext[]", m.recipient_username, ^usernames)
-      where: fragment("? <@ ?::citext[]", m.recipient_username, ^usernames)
+      # where: fragment("? @> ?::varchar[]", m.recipient_username, ^usernames)
+      where: fragment("? <@ ?::varchar[]", m.recipient_username, ^usernames)
   end
 
   @spec where_type_direct(Ecto.Query.t()) :: Ecto.Query.t()

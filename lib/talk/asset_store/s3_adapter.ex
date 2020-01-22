@@ -4,12 +4,12 @@ defmodule Talk.AssetStore.S3Adapter do
   alias ExAws.S3
 
   @behaviour Talk.AssetStore.Adapter
-
+  require Logger
   @impl true
   def persist(pathname, bucket, data, content_type) do
     opts = [
       {:acl, :public_read},
-      {:cache_control, "public, max-age=604800",},
+      {:cache_control, "public, max-age=604800"},
       {:content_type, content_type || "binary/octet-stream"}
     ]
 
@@ -24,6 +24,6 @@ defmodule Talk.AssetStore.S3Adapter do
 
   @impl true
   def public_url("https://" <> _ = full_url, _), do: full_url
-
-  def public_url(pathname, bucket), do: "https://s3.amazonaws.com/" <> bucket <> "/" <> pathname
+  def public_url({:ok, pathname}, bucket), do: {:ok, "https://s3.amazonaws.com/" <> bucket <> "/" <> pathname}
+  def public_url(err, _bucket), do: err
 end

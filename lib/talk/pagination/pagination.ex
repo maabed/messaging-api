@@ -14,7 +14,7 @@ defmodule Talk.Pagination do
   ## Examples
 
       base_query = from u in User,
-        where: u.id == ^user.id and u.state == "ACTIVE"
+        where: u.id == ^user.id and u.status == "ACTIVE"
 
       args = %{
         first: 10,

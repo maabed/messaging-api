@@ -36,6 +36,9 @@ talk-*.tar
 # variables.
 /config/*.secret.exs
 .env
+.env_docker
+.env-docker
+build/
 
 # docker postgres data
 /pgdata/
@@ -47,8 +50,3 @@ talk-*.tar
 
 # jwt public/private key pairs
 priv/keys/*.pem
-
-# sapien db tables
-priv/sapien_db/users.csv
-priv/sapien_db/followers.csv
-priv/sapien_db/blocked_profiles.csv

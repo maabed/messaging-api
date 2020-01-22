@@ -3,16 +3,28 @@ defmodule Talk.Repo.Migrations.CreateMessages do
   use Ecto.Migration
 
   def up do
-    execute("CREATE TYPE message_type AS ENUM ('TEXT','AUDIO','VIDEO','IMAGE','DRAWING')")
-    execute("CREATE TYPE message_state AS ENUM ('VALID','EXPIRED', 'DELETED')")
+    execute """
+      DO $$ BEGIN
+        CREATE TYPE message_type AS ENUM ('TEXT','AUDIO','VIDEO','IMAGE','DRAWING');
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END $$;
+    """
+
+    execute """
+      DO $$ BEGIN
+        CREATE TYPE message_status AS ENUM ('VALID','EXPIRED', 'DELETED');
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END $$;
+    """
 
     create table(:messages) do
-      add :body, :text
+      add :content, :text
       add :type, :message_type, default: "TEXT", null: false
-      add :state, :message_state, default: "VALID", null: false
+      add :status, :message_status, default: "VALID", null: false
       add :is_request, :boolean, default: false, null: false
-
-      add :user_id, references(:users, type: :string), null: false
+      add :profile_id, references(:profiles, column: :_id, type: :string), null: false
 
       timestamps()
 
@@ -21,6 +33,6 @@ defmodule Talk.Repo.Migrations.CreateMessages do
   def down do
     drop table(:messages)
     execute("DROP TYPE message_type")
-    execute("DROP TYPE message_state")
+    execute("DROP TYPE message_status")
   end
 end

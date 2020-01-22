@@ -5,23 +5,29 @@ defmodule TalkWeb.Auth.SecretFetcher do
 
   def fetch_signing_secret(_module, _opts) do
     secret =
-      "private-rsa-2048.pem"
-      |> fetch()
+      %{
+        "d" => System.get_env("GUARDIAN_D"),
+        "dp" => System.get_env("GUARDIAN_DP"),
+        "dq" => System.get_env("GUARDIAN_DQ"),
+        "e" => "AQAB",
+        "kty" => "RSA",
+        "n" => System.get_env("GUARDIAN_N"),
+        "p" => System.get_env("GUARDIAN_P"),
+        "q" => System.get_env("GUARDIAN_Q"),
+        "qi" => System.get_env("GUARDIAN_QI")
+      }
 
     {:ok, secret}
   end
 
   def fetch_verifying_secret(_module, _headers, _opts) do
     secret =
-      "public-rsa-2048.pem"
-      |> fetch()
+      %{
+        "e" => "AQAB",
+        "kty" => "RSA",
+        "n" => System.get_env("GUARDIAN_N")
+      }
 
     {:ok, secret}
-  end
-
-  defp fetch(key) do
-    Application.app_dir(:talk, "priv/keys")
-    |> Path.join(key)
-    |> JOSE.JWK.from_pem_file()
   end
 end

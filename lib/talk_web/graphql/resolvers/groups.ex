@@ -9,7 +9,7 @@ defmodule TalkWeb.Resolver.Groups do
   alias TalkWeb.Resolver.Helpers
   alias Talk.Groups.Connector, as: GroupsConnector
   alias Talk.GroupUsers.Connector, as: GroupUsersConnector
-
+  require Logger
 
   @type info :: %{context: %{user: User.t(), loader: Dataloader.t()} | nil}
   @type paginated_result :: {:ok, Pagination.Result.t()} | {:error, String.t()}
@@ -150,7 +150,7 @@ defmodule TalkWeb.Resolver.Groups do
   @spec subscribe_to_group(map(), info()) :: subscribe_to_group_response()
   def subscribe_to_group(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
-         :ok <- Groups.subscribe(group, user) do
+         :ok <- Groups.subscribe(group, user.profile) do
       {:ok, %{success: true, group: group, errors: []}}
     else
       {:error, %Changeset{} = changeset} ->
@@ -164,7 +164,7 @@ defmodule TalkWeb.Resolver.Groups do
   @spec unsubscribe_from_group(map(), info()) :: subscribe_to_group_response()
   def unsubscribe_from_group(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
-         :ok <- Groups.unsubscribe(group, user) do
+         :ok <- Groups.unsubscribe(group, user.profile) do
       {:ok, %{success: true, group: group, errors: []}}
     else
       {:error, %Changeset{} = changeset} ->

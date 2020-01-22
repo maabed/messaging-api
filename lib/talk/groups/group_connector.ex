@@ -11,8 +11,8 @@ defmodule Talk.Groups.Connector do
             last: nil,
             before: nil,
             after: nil,
-            state: :open,
-            search_term: :nil,
+            status: :open,
+            term: :nil,
             order_by: %{
               field: :name,
               direction: :asc
@@ -23,8 +23,8 @@ defmodule Talk.Groups.Connector do
           last: integer() | nil,
           before: String.t() | nil,
           after: String.t() | nil,
-          state: :open | :closed | :deleted | :all,
-          search_term: String.t() | nil,
+          status: :open | :closed | :deleted | :all,
+          term: String.t() | nil,
           order_by: %{
             field: :name | :inserted_at,
             direction: :asc | :desc
@@ -35,29 +35,29 @@ defmodule Talk.Groups.Connector do
     user
     |> Groups.Query.base_query()
     |> apply_search_filter(args)
-    |> apply_state_filter(args)
+    |> apply_status_filter(args)
     |> Pagination.fetch_result(Args.build(args))
   end
 
-  defp apply_search_filter(query, %{search_term: nil}), do: query
-  defp apply_search_filter(query, %{search_term: search_term}) when search_term === "", do: query
-  defp apply_search_filter(query, %{search_term: search_term}) when not is_binary(search_term), do: query
+  defp apply_search_filter(query, %{term: nil}), do: query
+  defp apply_search_filter(query, %{term: term}) when term === "", do: query
+  defp apply_search_filter(query, %{term: term}) when not is_binary(term), do: query
 
-  defp apply_search_filter(query, %{search_term: search_term}) do
-    Groups.Query.search_query(query, search_term)
+  defp apply_search_filter(query, %{term: term}) do
+    Groups.Query.search(query, term)
   end
 
-  defp apply_state_filter(query, %{state: :open}) do
-    where(query, state: "OPEN")
+  defp apply_status_filter(query, %{status: :open}) do
+    where(query, status: "OPEN")
   end
 
-  defp apply_state_filter(query, %{state: :closed}) do
-    where(query, state: "CLOSED")
+  defp apply_status_filter(query, %{status: :closed}) do
+    where(query, status: "CLOSED")
   end
 
-  defp apply_state_filter(query, %{state: :deleted}) do
-    where(query, state: "DELETED")
+  defp apply_status_filter(query, %{status: :deleted}) do
+    where(query, status: "DELETED")
   end
 
-  defp apply_state_filter(query, _), do: query
+  defp apply_status_filter(query, _), do: query
 end

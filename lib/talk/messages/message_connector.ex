@@ -14,11 +14,11 @@ defmodule Talk.Messages.Connector do
             before: nil,
             after: nil,
             filter: %{
-              subscribe_state: :all,
-              read_state: :all,
-              state: :all,
+              subscribe_status: :all,
+              read_status: :all,
+              status: :all,
               last_activity: :all,
-              request_state: :all,
+              request_status: :all,
               type: :all,
               recipients: []
             },
@@ -33,11 +33,11 @@ defmodule Talk.Messages.Connector do
           before: String.t() | nil,
           after: String.t() | nil,
           filter: %{
-            subscribe_state: :subscribed | :subscribed | :all,
-            read_state: :read | :unread | :all,
-            state: :valid | :expired | :deleted | :all,
+            subscribe_status: :subscribed | :subscribed | :all,
+            read_status: :read | :unread | :all,
+            status: :valid | :expired | :deleted | :all,
             last_activity: :today | :all,
-            request_state: :follower | :request | :all,
+            request_status: :follower | :request | :all,
             type: :direct | :group | :all,
             sender: String.t(),
             recipients: [String.t()],
@@ -57,14 +57,14 @@ defmodule Talk.Messages.Connector do
       |> Messages.Query.base_query()
       |> build_base_query(parent)
       |> apply_order_fields(args)
-      |> apply_request_state(args)
-      |> apply_subscribe_state(args)
-      |> apply_read_state(args)
-      |> apply_state(args)
+      |> apply_request_status(args)
+      |> where_in_specific_group(args)
+      |> apply_subscribe_status(args)
+      |> apply_read_status(args)
+      |> apply_status(args)
       |> apply_last_activity(args)
       |> apply_sender(args)
       |> apply_recipients(args)
-      |> apply_in_group(args)
       |> apply_type(args)
 
     pagination_args =
@@ -77,7 +77,6 @@ defmodule Talk.Messages.Connector do
   end
 
   defp build_base_query(query, %Group{id: group_id}) do
-    Logger.warn("1111111")
     Messages.Query.where_in_group(query, group_id)
   end
 
@@ -95,48 +94,48 @@ defmodule Talk.Messages.Connector do
 
   defp apply_order_fields(base_query, _), do: base_query
 
-  defp apply_request_state(base_query, %{filter: %{request_state: :follower}}) do
+  defp apply_request_status(base_query, %{filter: %{request_status: :follower}}) do
     Messages.Query.where_is_follower(base_query)
   end
 
-  defp apply_request_state(base_query, %{filter: %{request_state: :request}}) do
+  defp apply_request_status(base_query, %{filter: %{request_status: :request}}) do
     Messages.Query.where_is_request(base_query)
   end
 
-  defp apply_request_state(base_query, _), do: base_query
+  defp apply_request_status(base_query, _), do: base_query
 
-  defp apply_subscribe_state(base_query, %{filter: %{subscribe_state: :subscribed}}) do
+  defp apply_subscribe_status(base_query, %{filter: %{subscribe_status: :subscribed}}) do
     Messages.Query.where_subscribed(base_query)
   end
-  defp apply_subscribe_state(base_query, %{filter: %{subscribe_state: :unsubscribed}}) do
+  defp apply_subscribe_status(base_query, %{filter: %{subscribe_status: :unsubscribed}}) do
     Messages.Query.where_unsubscribed(base_query)
   end
 
-  defp apply_subscribe_state(base_query, _), do: base_query
+  defp apply_subscribe_status(base_query, _), do: base_query
 
-  defp apply_state(base_query, %{filter: %{state: :valid}}) do
+  defp apply_status(base_query, %{filter: %{status: :valid}}) do
     Messages.Query.where_valid(base_query)
   end
 
-  defp apply_state(base_query, %{filter: %{state: :expired}}) do
+  defp apply_status(base_query, %{filter: %{status: :expired}}) do
     Messages.Query.where_expired(base_query)
   end
 
-  defp apply_state(base_query, %{filter: %{state: :deleted}}) do
+  defp apply_status(base_query, %{filter: %{status: :deleted}}) do
     Messages.Query.where_deleted(base_query)
   end
 
-  defp apply_state(base_query, _), do: base_query
+  defp apply_status(base_query, _), do: base_query
 
-  defp apply_read_state(base_query, %{filter: %{read_state: :read}}) do
+  defp apply_read_status(base_query, %{filter: %{read_status: :read}}) do
     Messages.Query.where_read(base_query)
   end
 
-  defp apply_read_state(base_query, %{filter: %{read_state: :unread}}) do
+  defp apply_read_status(base_query, %{filter: %{read_status: :unread}}) do
     Messages.Query.where_unread(base_query)
   end
 
-  defp apply_read_state(base_query, _), do: base_query
+  defp apply_read_status(base_query, _), do: base_query
 
   defp apply_last_activity(base_query, %{
          filter: %{last_activity: :today},
@@ -163,12 +162,11 @@ defmodule Talk.Messages.Connector do
 
   defp apply_recipients(base_query, _), do: base_query
 
-  defp apply_in_group(base_query, %{filter: %{group_id: group_id}}) do
-    Logger.warn("22222")
-    Messages.Query.where_in_group(base_query, group_id)
+  defp where_in_specific_group(base_query, %{filter: %{group_id: group_id}}) do
+    Messages.Query.where_in_specific_group(base_query, group_id)
   end
 
-  defp apply_in_group(base_query, _), do: base_query
+  defp where_in_specific_group(base_query, _), do: base_query
 
   defp apply_type(base_query, %{filter: %{type: :direct}}) do
     Messages.Query.where_type_direct(base_query)

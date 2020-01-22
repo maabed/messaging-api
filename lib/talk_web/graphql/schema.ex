@@ -5,11 +5,9 @@ defmodule TalkWeb.Schema do
 
   alias TalkWeb.Schema.Middleware
 
-  import_types TalkWeb.Type.File
   import_types TalkWeb.Type.User
   import_types TalkWeb.Type.Enum
   import_types TalkWeb.Type.Group
-  import_types TalkWeb.Type.Search
   import_types TalkWeb.Type.Message
   import_types TalkWeb.Type.Paginator
   import_types TalkWeb.Type.Subscriptions
@@ -23,13 +21,10 @@ defmodule TalkWeb.Schema do
   query do
     import_fields(:user_queries)
     import_fields(:group_queries)
-    import_fields(:search_queries)
     import_fields(:message_queries)
   end
 
   mutation do
-    import_fields(:file_mutations)
-    import_fields(:user_mutations)
     import_fields(:group_mutations)
     import_fields(:message_mutations)
   end

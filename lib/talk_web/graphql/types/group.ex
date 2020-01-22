@@ -16,11 +16,11 @@ defmodule TalkWeb.Type.Group do
     field :id, non_null(:id)
     field :name, non_null(:string)
     field :description, :string
-    field :state, non_null(:group_state)
+    field :status, non_null(:group_status)
     field :is_private, non_null(:boolean)
     field :inserted_at, non_null(:timestamp)
     field :updated_at, non_null(:timestamp)
-    field :user, non_null(:user), resolve: dataloader(:db)
+    field :profile, non_null(:profile), resolve: dataloader(:db)
 
     field :messages, non_null(:message_pagination) do
       arg :first, :integer
@@ -78,8 +78,8 @@ defmodule TalkWeb.Type.Group do
 
   object :group_user do
     field :group, non_null(:group), resolve: dataloader(:db)
-    field :user, non_null(:user), resolve: dataloader(:db)
-    field :state, non_null(:group_user_state)
+    field :profile, non_null(:profile), resolve: dataloader(:db)
+    field :status, non_null(:group_user_status)
     field :role, non_null(:group_user_role)
   end
 
@@ -133,9 +133,9 @@ defmodule TalkWeb.Type.Group do
       arg :last, :integer
       arg :before, :timestamp
       arg :after, :timestamp
-      arg :search_term, :string
+      arg :term, :string
       arg :order_by, :group_order
-      arg :state, :group_state_filter, default_value: :open
+      arg :status, :group_status_filter, default_value: :open
       resolve &GroupResolver.groups/2
     end
   end

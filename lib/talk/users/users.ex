@@ -1,37 +1,80 @@
 defmodule Talk.Users do
-  @moduledoc " The Users context."
+  @moduledoc " The Users and Profiles context."
 
   import Ecto.Query
   require Logger
-  alias Talk.AssetStore
   alias Ecto.Changeset
   alias Talk.Repo
-  alias Talk.Schemas.{Follower, User}
+  alias Talk.Schemas.{BlockedProfile, Follower, Profile, User}
 
   @type query_result :: {:ok, User.t()} | {:error, String.t()}
   @type changeset_result :: {:ok, User.t()} | {:error, Changeset.t() | String.t()}
 
+  @spec user_base_query() :: Ecto.Query.t()
+  def user_base_query() do
+    from(u in User,
+      join: p in assoc(u, :profile),
+      select: %User{
+        id: u.id,
+        email: u.email,
+        inserted_at: u.inserted_at,
+        avatar: fragment("?->>?", p.thumbnail, "avatar"),
+        username: p.username,
+        display_name: p.display_name,
+        profile_id: p.id,
+        profile: p
+      })
+  end
+
+  @spec user_base_query(User.t()) :: Ecto.Query.t()
+  def user_base_query(%User{} = user) do
+    user_base_query()
+    |> where([u, _], u.id == ^user.id)
+  end
+
   @spec users_base_query(User.t()) :: Ecto.Query.t()
   def users_base_query(%User{} = _user) do
-    from u in User,
-      where: not is_nil(u.id)
+    user_base_query()
+    |> where([u, _], not is_nil(u.id))
+    # join: f in Follower,
+    # on: f.follower_id == p.id,
+    # join: b in BlockedProfile,
+    # on: b.blocked_by_id == ^profile.id,
+    # where: f.following_id == p.id,
+    # where: b.blocked_profile_id != p.id
+  end
+
+  @spec profiles_base_query(User.t()) :: Ecto.Query.t()
+  def profiles_base_query(%User{} = _user) do
+    from p in Profile,
+      join: u in assoc(p, :user)
+      # where: p.user_id == ^user.id
+    # from u in User,
+    #   join: p in assoc(u, :profile)
       # where: u.id == ^user.id
   end
 
-  @spec followers_query(User.t()) :: Ecto.Query.t()
-  def followers_query(%User{profile_id: profile_id} = _user) do
-    from u in User,
-      join: f in Follower,
-      on: f.following_id == u.profile_id,
-      where: f.follower_id == ^profile_id
+  @spec get_user_by_id(User.t(), String.t()) :: query_result()
+  def get_user_by_id(%User{} = user, user_id) do
+    query =
+      user
+      |> user_base_query()
+
+    case Repo.get(query, user_id) do
+      %User{} = user ->
+        {:ok, user}
+      _ ->
+        {:error, :not_found}
+    end
   end
 
   @spec get_user_by_id(String.t()) :: query_result()
-  def get_user_by_id(id) do
-    case Repo.get(User, id) do
+  def get_user_by_id(user_id) do
+    query = user_base_query()
+
+    case Repo.get(query, user_id) do
       %User{} = user ->
         {:ok, user}
-
       _ ->
         {:error, :not_found}
     end
@@ -39,26 +82,52 @@ defmodule Talk.Users do
 
   @spec get_user_by_email(String.t()) :: query_result()
   def get_user_by_email(email) do
-    case Repo.get_by!(User, email: email) do
+    query = user_base_query()
+
+    case Repo.get_by(query, email: email) do
       %User{} = user ->
         {:ok, user}
-
       _ ->
         {:error, :not_found}
     end
   end
 
   @spec get_user_by_email(User.t(), String.t()) :: query_result()
-  def get_user_by_email(%User{} = user, email) do
+  def get_user_by_email(%User{} = _user, email) do
+    query = user_base_query()
+
+    case Repo.get_by(query, email: email) do
+      %User{} = user ->
+        {:ok, user}
+      _ ->
+        {:error, :not_found}
+    end
+  end
+
+  @spec get_user_by_username(String.t()) :: query_result()
+  def get_user_by_username(username) do
     query =
-      user
-      |> users_base_query()
-      |> where([u], u.email == ^email)
+      user_base_query()
+      |> where([_, p], p.username == ^username)
 
     case Repo.one(query) do
       %User{} = user ->
         {:ok, user}
+      _ ->
+        {:error, :not_found}
+    end
+  end
 
+  @spec get_user_by_profile_id(User.t(), String.t()) :: query_result()
+  def get_user_by_profile_id(%User{} = user, profile_id) do
+    query =
+      user
+      |> user_base_query()
+      |> where([_, p], p.id == ^profile_id)
+
+    case Repo.one(query) do
+      %User{} = user ->
+        {:ok, user}
       _ ->
         {:error, :not_found}
     end
@@ -66,118 +135,108 @@ defmodule Talk.Users do
 
   @spec get_user_by_profile_id(String.t()) :: query_result()
   def get_user_by_profile_id(profile_id) do
-    case Repo.get_by!(User, profile_id: profile_id) do
-      %User{} = user ->
-        {:ok, user}
-
-      _ ->
-        {:error, :not_found}
-    end
-  end
-
-  def get_user_by_profile_id(%User{} = user, profile_id) do
     query =
-      user
-      |> users_base_query()
-      |> where([u], u.profile_id == ^profile_id)
+      user_base_query()
+      |> where([_, p], p.id == ^profile_id)
 
     case Repo.one(query) do
       %User{} = user ->
         {:ok, user}
-
       _ ->
         {:error, :not_found}
     end
   end
 
-  @spec get_user_by_username( String.t()) :: query_result()
-  def get_user_by_username(username) do
-    case Repo.get_by!(User, username: username) do
-      %User{} = user ->
-        {:ok, user}
-
-      _ ->
-        {:error, :not_found}
-    end
+  @spec users_search_base_query(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
+  def users_search_base_query(term, %User{profile: profile} = _user) do
+    from(p in Profile,
+      left_join: p1 in Profile,
+      on: p1.id == ^profile.id,
+      left_join: b in BlockedProfile,
+      on: b.blocked_by_id == ^profile.id,
+      left_join: b1 in BlockedProfile,
+      on: b1.blocked_profile_id != p.id,
+      where: p1.id != p.id,
+      where: ilike(p.username, ^term) or ilike(p.display_name, ^term),
+      distinct: true
+    )
+    |> apply_rank_query(term)
+    # using similarity
+    # where: fragment("similarity(?, ?) > ?", p.username, ^term, 0.2) or
+    #        fragment("similarity(?, ?) > ?", p.display_name, ^term, 0.2)
   end
 
-  def get_user_by_username(%User{} = user, username) do
+  @spec apply_rank_query(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
+  def apply_rank_query(query, term) do
+    from p in query,
+      select: %{
+        id: p.id,
+        user_id: p.user_id,
+        avatar: fragment("?->>?", p.thumbnail, "avatar"),
+        username: p.username,
+        display_name: p.display_name,
+        rank: fragment(
+          "GREATEST(similarity(?, ?), similarity(?, ?))",
+          p.username, ^term, p.display_name, ^term
+        )
+      },
+      order_by: fragment("rank DESC")
+  end
+
+  @spec followers_query(User.t()) :: Ecto.Query.t()
+  def followers_query(%User{profile: _profile} = _user) do
+    from p in Profile,
+      join: f in assoc(p, :followers)
+      # where: f.following_id == ^profile.id
+  end
+
+  @spec followings_query(User.t()) :: Ecto.Query.t()
+  def followings_query(%User{profile: profile} = _user) do
+    from p in Profile,
+      join: f in assoc(p, :followers),
+      on: f.follower_id == ^profile.id
+  end
+
+  @spec blocked_query(User.t()) :: Ecto.Query.t()
+  def blocked_query(%User{profile: _profile} = _user) do
+    from p in Profile,
+      join: b in assoc(p, :blocked_profiles)
+      # where: b.blocked_by_id == ^profile.id
+  end
+
+  @spec get_followers(User.t()) :: Ecto.Query.t()
+  def get_followers(%User{profile: profile} = _user) do
+    profile = Repo.preload(profile, :followers)
+    {:ok, profile.followers}
+  end
+
+  @spec get_blocked_profiles(User.t()) :: Ecto.Query.t()
+  def get_blocked_profiles(%User{} = user) do
+    profile = Repo.preload(user.profile, :blocked_profiles)
+    {:ok, profile.blocked_profiles}
+  end
+
+  @spec is_following?(User.t(), String.t()) :: {:ok, boolean()}
+  def is_following?(%User{} = user, profile_id) do
     query =
-      user
-      |> users_base_query()
-      |> where([u], u.username == ^username)
+      from f in Follower,
+        where: f.following_id == ^user.profile_id and f.follower_id == ^profile_id
 
     case Repo.one(query) do
-      %User{} = user ->
-        {:ok, user}
-
-      _ ->
-        {:error, :not_found}
+      %Follower{} = _follower -> true
+      _ -> false
     end
   end
 
-  def get_user(%User{} = user, user_id) do
+  @spec is_blocked?(User.t(), String.t()) :: {:ok, boolean()}
+  def is_blocked?(%User{} = user, profile_id) do
     query =
-      user
-      |> users_base_query()
-      |> where([u], u.id == ^user_id)
+      from b in BlockedProfile,
+        where: b.blocked_by_id == ^user.profile_id and b.blocked_profile_id == ^profile_id
 
     case Repo.one(query) do
-      %User{} = user ->
-        {:ok, user}
-
-      _ ->
-        {:error, :not_found}
+      %BlockedProfile{} = _blocked -> true
+      _ -> false
     end
   end
-
-  @spec create_user(map()) :: changeset_result()
-  def create_user(params) do
-    %User{}
-    |> User.create_changeset(params)
-    |> Repo.insert(on_conflict: :nothing)
-    |> after_create_user()
-  end
-
-  defp after_create_user({:ok, user}), do: {:ok, user}
-  defp after_create_user(err), do: err
-
-  @spec update_user(User.t(), map()) :: changeset_result()
-  def update_user(user, params) do
-    user
-    |> User.update_changeset(params)
-    |> Repo.update()
-    |> after_update_user()
-  end
-
-  defp after_update_user({:ok, %User{} = user}), do: {:ok, user}
-  defp after_update_user({:error, :user, %Changeset{} = changeset, _}), do: {:error, changeset}
-  defp after_update_user(_), do: {:error, "An unexpected error occurred"}
-
-  @spec update_avatar(User.t(), String.t()) :: changeset_result()
-  def update_avatar(user, raw_data) do
-    raw_data
-    |> AssetStore.persist_avatar()
-    |> set_user_avatar(user)
-  end
-
-  defp set_user_avatar({:ok, filename}, user), do: update_user(user, %{avatar: filename})
-  defp set_user_avatar(:error, _user), do: {:error, "An error occurred updating avatar"}
-
-
-  def delete_user(%User{} = user) do
-    user
-    |> Repo.delete()
-    |> after_delete_user()
-
-    {:ok, true}
-  end
-
-  defp after_delete_user({:ok, _user}) do
-    # remove users channel?
-    :ok
-  end
-
-  defp after_delete_user(err), do: err
-
 end

@@ -8,6 +8,12 @@ defmodule TalkWeb.Plug.CurrentUser do
   def call(conn, _default) do
     with {:ok, user} <- TalkWeb.Auth.current_user(conn) do
       assign(conn, :user, user)
+    else
+      {:error, :not_found} ->
+        conn
+
+      err ->
+        err
     end
   end
 end

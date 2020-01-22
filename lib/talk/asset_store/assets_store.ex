@@ -1,11 +1,12 @@
 defmodule Talk.AssetStore do
   @moduledoc """
-  Responsible for taking file uploads and storing them.
+  Responsible for taking file (media) uploads and storing them.
   """
   require Logger
 
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
+  @avatar_bucket Application.get_env(:talk, :asset_store)[:avatar_bucket]
   @alphabet Enum.to_list(?a..?z) ++ Enum.to_list(?0..?9)
 
   @doc "Uploads an avatar with a randomly-generated file name."
@@ -24,26 +25,25 @@ defmodule Talk.AssetStore do
 
   @doc "Generates the URL for a given avatar filename."
   @spec avatar_url(String.t()) :: String.t()
-  def avatar_url(pathname), do: @adapter.public_url(pathname, @bucket)
+  def avatar_url(pathname) do
+    @adapter.public_url(pathname, @avatar_bucket)
+  end
 
   @doc "Uploads a file."
-  @spec persist_file(String.t(), String.t(), binary(), String.t()) :: {:ok, String.t()} | {:error, any()}
-  def persist_file(id, filename, binary_data, content_type) do
-    id
-    |> build_file_path(filename)
-    |> @adapter.persist(@bucket, binary_data, content_type)
+  @spec persist_file(String.t(), binary(), String.t()) :: {:ok, String.t()} | {:error, any()}
+  def persist_file(filename, binary_data, type) do
+    build_file_path(filename)
+    |> @adapter.persist(@bucket, binary_data, type)
   end
 
   @doc "Generates the URL for a file upload."
-  @spec file_url(String.t(), String.t()) :: String.t()
-  def file_url(id, filename) do
-    id
-    |> build_file_path(filename)
+  def file_url(filename) do
+    build_file_path(filename)
     |> @adapter.public_url(@bucket)
   end
 
-  defp build_file_path(id, filename) do
-    "uploads/" <> to_string(id) <> "-" <> random_alphabet() <> "/" <> filename
+  defp build_file_path(filename) do
+    "uploads/" <> random_alphabet() <> filename
   end
 
   defp decode_base64_data_url(raw_data) do
@@ -69,15 +69,9 @@ defmodule Talk.AssetStore do
   defp image_extension(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _::binary>>), do: ".png"
   defp image_extension(<<0xFF, 0xD8, _::binary>>), do: ".jpg"
 
-  # defp random_string() do
-  #   :crypto.strong_rand_bytes(12)
-  #   |> Base.encode64()
-  #   |> binary_part(0, 12)
-  # end
-
-  defp random_alphabet() do
+  def random_alphabet() do
     @alphabet
-    |> Enum.take_random(12)
+    |> Enum.take_random(16)
     |> to_string
   end
 end

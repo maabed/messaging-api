@@ -7,11 +7,13 @@ defmodule Talk.Users.Connector do
   alias Talk.Pagination.Args
   alias Talk.Schemas.User
   alias Talk.Users
+  require Logger
 
   defstruct first: nil,
             last: nil,
             before: nil,
             after: nil,
+            term: nil,
             order_by: %{
               field: :username,
               direction: :asc
@@ -22,7 +24,11 @@ defmodule Talk.Users.Connector do
           last: integer() | nil,
           before: String.t() | nil,
           after: String.t() | nil,
-          order_by: %{field: :username | :inserted_at, direction: :asc | :desc}
+          term: String.t() | nil,
+          order_by: %{
+            field: :username | :inserted_at | :rank,
+            direction: :asc | :desc
+          }
         }
 
   def get(%User{} = user, args, %{context: %{user: current_user}} = _info) do
@@ -49,5 +55,22 @@ defmodule Talk.Users.Connector do
     else
       {:error, "unauthorized"}
     end
+  end
+
+  def search(args, %{context: %{user: user}}) do
+    user
+    |> process_args(args)
+  end
+
+  defp process_args(_user, %{term: nil}), do: {:error, :no_results}
+  defp process_args(_user, %{term: term}) when term === "", do: {:error, :no_results}
+  defp process_args(_user, %{term: term} = _args) when not is_binary(term), do: {:error, :no_results}
+  defp process_args(user, %{term: term} = args) do
+    base_query =
+      "%" <> term <> "%"
+      |> Users.users_search_base_query(user)
+
+    wrapped_query = from(su in subquery(base_query))
+    Pagination.fetch_result(wrapped_query, Args.build(args))
   end
 end

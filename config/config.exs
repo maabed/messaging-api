@@ -1,22 +1,28 @@
-use Mix.Config
+import Config
 
-origins = ["//127.0.0.1", "//localhost", "//*.sapien.network", "//sapien-chat.herokuapp.com"]
+origins = ["//localhost:3000", "//*.sapien.network"]
 audience = ["sapien.network", "beta.sapien.network", "talk.sapien.network", "notifier.sapien.network"]
 
 config :talk,
   ecto_repos: [Talk.Repo],
   env: Mix.env(),
-  origins: origins,
-  jwt_aud: audience
+  jwt_aud: audience,
+  user_agent_req: false,
+  allowed_origins: origins,
+  gif_service_url: "https://media.giphy.com/media/"
 
-config :talk, Talk.Repo, migration_timestamps: [type: :utc_datetime_usec]
+config :talk, Talk.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  url: System.get_env("DATABASE_URL"),
+  migration_source: "chat_migrations",
+  migration_timestamps: [type: :utc_datetime_usec],
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "20")
 
 config :talk, TalkWeb.Endpoint,
   url: [host: System.get_env("HOST")],
   secret_key_base: System.get_env("SECRET_KEY_BASE"),
   render_errors: [view: TalkWeb.ErrorView, accepts: ~w(json)],
   pubsub: [name: Talk.PubSub, adapter: Phoenix.PubSub.PG2],
-  watchers: [],
   check_origin: origins
 
 config :talk, TalkWeb.Auth,
@@ -29,6 +35,7 @@ config :talk, TalkWeb.Auth,
 
 config :talk, :asset_store,
   bucket: System.get_env("ASSET_STORE_BUCKET"),
+  avatar_bucket: System.get_env("ASSET_AVATAR_BUCKET"),
   adapter: Talk.AssetStore.S3Adapter
 
 config :ex_aws,
@@ -39,7 +46,7 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-config :absinthe, log: System.get_env("GRAPHQL_LOG") == "1"
+config :absinthe, log: false
 
 config :phoenix, :generators,
   migration: true,
@@ -50,3 +57,5 @@ config :phoenix, :json_library, Jason
 config :tzdata, :autoupdate, :disabled
 
 import_config "#{Mix.env()}.exs"
+
+# import_config "timber.exs"

@@ -1,33 +1,24 @@
-use Mix.Config
+import Config
 
 config :talk, TalkWeb.Endpoint,
   url: [host: "localhost"],
   http: [port: 7000],
   debug_errors: true,
-  code_reloader: true,
-  check_origin: false
+  code_reloader: true
+  # check_origin: false
 
-# main database
 config :talk, Talk.Repo,
+  adapter: Ecto.Adapters.Postgres,
   username: "postgres",
   password: "postgres",
-  database: "talk_dev",
-  hostname: "localhost",
-  pool_size: 5,
-  timeout: 90_000,
-  log: String.to_atom(System.get_env("SQL_LOG")) || false
-
-# sapien database
-config :talk, Talk.SapienRepo,
-  username: "sapien",
-  password: "sapien",
   database: "sapien",
   hostname: "localhost",
-  pool_size: 5,
-  timeout: 90_000,
-  log: String.to_atom(System.get_env("SQL_LOG")) || false
+  pool_size: 10,
+  log: false
 
-config :logger, :console, format: "[$level] $message\n"
+config :logger, :console,
+  format: "[$level] $message\n",
+  truncate: :infinity
 
 config :phoenix, :stacktrace_depth, 20
 

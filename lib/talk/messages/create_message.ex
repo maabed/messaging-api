@@ -6,8 +6,8 @@ defmodule Talk.Messages.CreateMessage do
 
   alias Talk.Repo
   alias Ecto.Multi
-  alias Talk.{Events, Files, Groups, Messages}
-  alias Talk.Schemas.{Group, Message, MessageGroup, User, UserLog}
+  alias Talk.{Events, Medias, Groups, Messages}
+  alias Talk.Schemas.{Group, Message, MessageGroup, MessageLog, Profile, User}
 
   @type result :: {:ok, map()} | {:error, any(), any(), map()}
 
@@ -16,26 +16,17 @@ defmodule Talk.Messages.CreateMessage do
     Multi.new()
     |> insert_message(user, params)
     |> set_group(group, user)
-    |> attach_files(user, params)
+    |> attach_medias(user, params)
     |> log(user)
     |> Repo.transaction()
     |> after_insert_message(user, group, params)
   end
 
-  # @spec perform(User.t(), map()) :: result()
-  # def perform(%User{} = user, params) do
-  #   Multi.new()
-  #   |> insert_message(user, params)
-  #   |> attach_files(user, params)
-  #   |> log(user)
-  #   |> Repo.transaction()
-  #   |> after_insert_message(user, params)
-  # end
-
   defp insert_message(multi, %User{} = user, params) do
     params_with_relations =
       params
-      |> Map.put(:user_id, user.id)
+      |> Map.put(:profile_id, user.profile_id)
+
     Multi.insert(multi, :message, Message.create_changeset(%Message{}, params_with_relations))
   end
 
@@ -44,8 +35,8 @@ defmodule Talk.Messages.CreateMessage do
       params = %{
         message_id: message.id,
         group_id: group.id,
-        read_state: "READ",
-        user_id: user.id,
+        profile_id: user.profile_id,
+        read_status: "READ"
       }
       %MessageGroup{}
       |> Ecto.Changeset.change(params)
@@ -55,20 +46,25 @@ defmodule Talk.Messages.CreateMessage do
     end)
   end
 
-  defp attach_files(multi, user, %{file_ids: file_ids}) do
-    Multi.run(multi, :files, fn _repo, %{message: message} ->
-      files = Files.get_files(user, file_ids)
-      Messages.attach_files(message, files)
+  defp attach_medias(multi, user, %{media: %Plug.Upload{} = upload}) do
+    Multi.run(multi, :media, fn _repo, %{message: message} ->
+      Medias.upload_media(user, upload, message)
     end)
   end
 
-  defp attach_files(multi, _, _) do
-    Multi.run(multi, :files, fn _repo, _ -> {:ok, []} end)
+  defp attach_medias(multi, user, %{media_id: media_id}) do
+    Multi.run(multi, :media, fn _repo, %{message: message} ->
+      Medias.upload_media(user, media_id, message)
+    end)
+  end
+
+  defp attach_medias(multi, _, _) do
+    Multi.run(multi, :media, fn _repo, _ -> {:ok, []} end)
   end
 
   defp log(multi, user) do
     Multi.run(multi, :log, fn _repo, %{message: message} ->
-      UserLog.message_created(message, user)
+      MessageLog.message_created(message, user.profile)
     end)
   end
 
@@ -76,7 +72,6 @@ defmodule Talk.Messages.CreateMessage do
     subscribe_recipients(message, group, user, params)
     subscribe_group_users(message, result, user)
     send_events(message)
-
     {:ok, result}
   end
 
@@ -86,16 +81,17 @@ defmodule Talk.Messages.CreateMessage do
 
   defp subscribe_recipients(message, group, user, %{recipient_usernames: usernames}) do
     query =
-      from u in User,
-        where: u.username in ^usernames
+      from p in Profile,
+        join: u in assoc(p, :user),
+        where: p.username in ^usernames
 
     recipients = Repo.all(query)
 
     Enum.each(recipients, fn recipient ->
       if recipient.id === user.id do
-        Messages.mark_as_read(recipient, group, [message])
+        Messages.mark_as_read(recipient.user, group, [message])
       else
-        Messages.mark_as_unread(recipient, group, [message])
+        Messages.mark_as_unread(recipient.user, group, [message])
       end
     end)
   end
@@ -104,19 +100,19 @@ defmodule Talk.Messages.CreateMessage do
 
   defp subscribe_group_users(message, %{groups: group}, user) do
     {:ok, group_users} = Groups.list_members(group)
-    group_users = Repo.preload(group_users, :user)
+    group_users = Repo.preload(group_users, :profile)
 
     Enum.each(group_users, fn group_user ->
       if group_user.user.id === user.id do
-        Messages.mark_as_read(group_user.user, group, [message])
+        Messages.mark_as_read(group_user.profile, group, [message])
       else
-        Messages.mark_as_unread(group_user.user, group, [message])
+        Messages.mark_as_unread(group_user.profile, group, [message])
       end
     end)
   end
 
   defp send_events(message) do
-    {:ok, user_ids} = Messages.get_accessor_ids(message)
-    Events.message_created(user_ids, message)
+    {:ok, profile_ids} = Messages.get_accessor_ids(message)
+    Events.message_created(profile_ids, message)
   end
 end

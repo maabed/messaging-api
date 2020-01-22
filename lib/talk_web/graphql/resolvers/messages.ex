@@ -6,7 +6,7 @@ defmodule TalkWeb.Resolver.Messages do
   require Logger
 
   alias Ecto.Changeset
-  alias Talk.{Groups, Messages, Users}
+  alias Talk.{Groups, Messages, Medias, Users}
   alias Talk.Schemas.{Group, Message, User}
   alias TalkWeb.Resolver.Helpers
   alias Talk.Messages.Connector
@@ -25,26 +25,28 @@ defmodule TalkWeb.Resolver.Messages do
           }} | {:error, String.t()}
 
   def messages(%Group{} = group, args, info) do
-    Logger.warn("messages here ")
     Connector.get(group, struct(Connector, args), info)
   end
 
   @spec messages(map(), info()) :: paginated_result()
   def messages(args, info) do
-    Logger.warn("messages here 1")
-
     Connector.get(nil, struct(Connector, args), info)
   end
 
   @spec message_sender(Message.t(), map(), info()) :: dataloader_result()
-  def message_sender(%Message{user_id: user_id} = _message, _args, _info) when is_binary(user_id) do
-    Users.get_user_by_id(user_id)
+  def message_sender(%Message{profile_id: profile_id} = _message, _args, %{context: %{user: user}}) when is_binary(profile_id) do
+    Users.get_user_by_profile_id(user, profile_id)
+  end
+
+  @spec message_media(Message.t(), map(), info()) :: dataloader_result()
+  def message_media(%Message{id: id} = _message, _, _info) do
+    Medias.get_media_by_message_id(to_string(id))
   end
 
   @spec can_edit_message(Message.t(), map(), info()) :: dataloader_result()
   def can_edit_message(%Message{} = message, _, %{context: %{loader: loader, user: user}}) do
     batch_key = User
-    item_key = message.user_id
+    item_key = message.profile_id
 
     loader
     |> Dataloader.load(:db, batch_key, item_key)
@@ -69,22 +71,36 @@ defmodule TalkWeb.Resolver.Messages do
   end
 
   @spec create_message(map(), info()) :: message_mutation_result()
-  def create_message(%{group_id: _} = args, %{context: %{user: user}}) do
-    with {:ok, group} <- Groups.get_group(user, args.group_id),
-         {:ok, %{message: message}} <- Messages.create_message(user, group, args) do
-      {:ok, %{success: true, message: message, errors: []}}
+  def create_message(%{group_id: group_id, content: content} = args, %{context: %{user: user}}) when is_binary(content) do
+    with {:ok, group} <- Groups.get_group(user, group_id),
+         {:ok, %{message: message, media: media}} <- Messages.create_message(user, group, args) do
+          result =
+            case is_map(media) and not is_nil(media.url) do
+              true ->
+                %Message{ message | media: media }
+
+              false ->
+                message
+            end
+      {:ok, %{success: true, message: result, errors: []}}
     else
       {:error, :message, changeset, _} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
 
+      {:error, :media, :file_type_not_allowed, _} ->
+        {:ok, %{
+          success: false,
+          message: nil,
+          errors: [%{attribute: "media", message: "Invalid file type"}]
+        }}
       err ->
         err
     end
   end
 
   @spec list_recipients(Message.t(), map(), info()) :: message_mutation_result()
-  def list_recipients(%Message{id: id, user_id: user_id} = _message, _args, _info) do
-    with {:ok, group} <- Groups.get_group_by_message_id(user_id, id),
+  def list_recipients(%Message{id: id, profile_id: _profile_id} = _message, _args, %{context: %{user: user}}) do
+    with {:ok, group} <- Groups.get_group_by_message_id(user.profile_id, id),
          {:ok, users} <- Groups.list_recipients(group, id) do
       {:ok, users}
     else
@@ -95,19 +111,6 @@ defmodule TalkWeb.Resolver.Messages do
         err
     end
   end
-
-  # def create_message(args, %{context: %{user: user}}) do
-  #   with {:ok, user} <- Users.get_user_by_id(user.id),
-  #        {:ok, %{message: message}} <- Messages.create_message(user, args) do
-  #     {:ok, %{success: true, message: message, errors: []}}
-  #   else
-  #     {:error, :message, changeset, _} ->
-  #       {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
-
-  #     err ->
-  #       err
-  #   end
-  # end
 
   @spec update_message(map(), info()) :: message_mutation_result()
   def update_message(args, %{context: %{user: user}}) do
@@ -192,13 +195,11 @@ defmodule TalkWeb.Resolver.Messages do
     end
   end
 
-  @spec read_state(Message.t(), map(), info()) :: :message_user_state | nil
-  def read_state(%Message{id: id, user_id: user_id} = _message, _args, _info) do
-    with {:ok, group} <- Groups.get_group_by_message_id(user_id, id),
-         {:ok, read_state} <- Messages.get_read_state(group, id, user_id)
-         do
-      {:ok, read_state}
-
+  @spec read_status(Message.t(), map(), info()) :: :message_read_status | nil
+  def read_status(%Message{id: id, profile_id: profile_id} = _message, _args, _info) do
+    with {:ok, group} <- Groups.get_group_by_message_id(profile_id, id),
+         {:ok, read_status} <- Messages.get_message_read_status(group, id, profile_id) do
+      {:ok, read_status}
     else
       {:error, changeset} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}

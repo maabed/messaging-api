@@ -1,0 +1,157 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:10.16
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mongo:3.4.4
+
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Set environment variables
+          command: |
+            echo 'export ECR_REPOSITORY_NAME="sapien-${AWS_RESOURCE_NAME_PREFIX}"' >> $BASH_ENV
+            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:latest"' >> $BASH_ENV
+            echo 'export PORT_VALUE="${PORT}"' >> $BASH_ENV
+            echo 'export HOST_VALUE="${HOST}"' >> $BASH_ENV
+            echo 'export POSTGRES_HOST_VALUE="${POSTGRES_HOST}"' >> $BASH_ENV
+            echo 'export POSTGRES_DATABASE_VALUE="${POSTGRES_DATABASE}"' >> $BASH_ENV
+            echo 'export POSTGRES_USER_VALUE="${POSTGRES_USER}"' >> $BASH_ENV
+            echo 'export POSTGRES_PASSWORD_VALUE="${POSTGRES_PASSWORD}"' >> $BASH_ENV
+            echo 'export POOL_SIZE_VALUE="${POOL_SIZE}"' >> $BASH_ENV
+            echo 'export DATABASE_URL_VALUE="${DATABASE_URL}"' >> $BASH_ENV
+            echo 'export SECRET_KEY_BASE_VALUE="${SECRET_KEY_BASE}"' >> $BASH_ENV
+            echo 'export ASSET_STORE_BUCKET_VALUE="${ASSET_STORE_BUCKET}"' >> $BASH_ENV
+            echo 'export ASSET_AVATAR_BUCKET_VALUE="${ASSET_AVATAR_BUCKET}"' >> $BASH_ENV
+            echo 'export AWS_ACCESS_KEY_ID_VALUE="${AWS_ACCESS_KEY_ID}"' >> $BASH_ENV
+            echo 'export AWS_SECRET_ACCESS_KEY_VALUE="${AWS_SECRET_ACCESS_KEY}"' >> $BASH_ENV
+      - run:
+          name: Build talk Docker image
+          command: |
+            docker build -t $FULL_IMAGE_NAME .
+      - run:
+          name: Test talk image
+          command: |
+            docker-compose -f .circleci/docker-compose.yml up -d
+            sleep 10
+            docker ps
+            LOCAL_TALK_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-talk)
+            docker logs local-talk
+            docker run --network container:local-talk appropriate/curl -sSLI --retry 10 --retry-connrefused http://$LOCAL_TALK_IP:$PORT_VALUE/api/health
+      - run:
+          name: Save talk image to an archive
+          command: |
+            mkdir docker-image
+            docker save -o docker-image/image.tar $FULL_IMAGE_NAME
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docker-image
+  deploy:
+    docker:
+      - image: circleci/python:3.6.1
+    environment:
+      AWS_DEFAULT_OUTPUT: json
+    steps:
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: Install awscli
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install awscli
+      - run:
+          name: Load image
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "development" ]; then
+              docker load --input workspace/docker-image/image.tar
+            fi
+      - run:
+          name: Setup common environment variables
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "development" ]; then
+              echo 'export AWS_ENVIRONMENT="dev"' >> $BASH_ENV
+            elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
+              echo 'export AWS_ENVIRONMENT="stg"' >> $BASH_ENV
+            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+              echo 'export AWS_ENVIRONMENT="prd"' >> $BASH_ENV
+            fi
+            echo 'export ECR_REPOSITORY_NAME="sapien-${AWS_RESOURCE_NAME_PREFIX}"' >> $BASH_ENV
+            echo 'export ECS_CLUSTER_NAME="sapien-pub-${AWS_ENVIRONMENT}"' >> $BASH_ENV
+            echo 'export ECS_SERVICE_NAME="${AWS_RESOURCE_NAME_PREFIX}-${AWS_ENVIRONMENT}-fargate"' >> $BASH_ENV
+      - run:
+          name: Push image
+          command: |
+            . venv/bin/activate
+            eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+            if [ "${CIRCLE_BRANCH}" == "development" ]; then
+              docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:latest
+              MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY_NAME --image-ids imageTag=latest --query 'images[].imageManifest' --output text)
+              aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag DEV --image-manifest "$MANIFEST"
+              aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag ${CIRCLE_SHA1} --image-manifest "$MANIFEST"
+            elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
+              MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY_NAME --image-ids imageTag=DEV --query 'images[].imageManifest' --output text)
+              aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag STG --image-manifest "$MANIFEST"
+            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+              MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY_NAME --image-ids imageTag=STG --query 'images[].imageManifest' --output text)
+              aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag PRD --image-manifest "$MANIFEST"
+            fi
+      - run:
+          name: Update the talk ECS Service with the latest Task Definition and Docker image
+          command: |
+            . venv/bin/activate
+            export ECS_TASK_FAMILY_NAME="${AWS_RESOURCE_NAME_PREFIX}-${AWS_ENVIRONMENT}-fargate-td"
+            export ECS_CONTAINER_DEFINITION_NAME="${AWS_RESOURCE_NAME_PREFIX}-${AWS_ENVIRONMENT}-dc"
+            export EXECUTION_ROLE_ARN="arn:aws:iam::$AWS_ACCOUNT_ID:role/ecsTaskExecutionRole"
+            aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --task-definition $ECS_TASK_FAMILY_NAME --force-new-deployment
+      - run:
+          name: Test deployment (Please manually tear down AWS resources after use, if desired)
+          command: |
+            . venv/bin/activate
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
+            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
+            aws ecs wait services-stable --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME
+            curl -sSLIk https://$ELB_DNS_NAME/api/health | grep " 200"
+            if [ "${CIRCLE_BRANCH}" == "development" ]; then
+              curl -sSLIk https://sapien-talk-stg.sapien.network/api/health | grep " 200"
+            elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
+              curl -sSLIk https://sapien-talk-stg.sapien.network/api/health | grep " 200"
+            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+              curl -sSLIk https://sapien-talk.sapien.network/api/health | grep " 200"
+            fi
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - staging
+                - master
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - development
+  deploy-staging-master:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              only:
+                - staging
+                - master

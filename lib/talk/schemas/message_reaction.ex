@@ -8,14 +8,14 @@ defmodule Talk.Schemas.MessageReaction do
   import Ecto.Changeset
 
   alias Talk.Schemas.Message
-  alias Talk.Schemas.User
+  alias Talk.Schemas.Profile
 
   @type t :: %__MODULE__{}
   @timestamps_opts [type: :utc_datetime_usec]
   schema "message_reactions" do
     field :value, :string, read_after_writes: true
 
-    belongs_to :user, User, type: :string
+    belongs_to :profile, Profile, type: :string
     belongs_to :message, Message
 
     timestamps()
@@ -24,7 +24,7 @@ defmodule Talk.Schemas.MessageReaction do
   @doc false
   def create_changeset(struct, attrs \\ %{}) do
     struct
-    |> cast(attrs, [:user_id, :message_id, :value])
+    |> cast(attrs, [:profile_id, :message_id, :value])
     |> validate_required([:value])
     |> validate_length(:value, min: 1, max: 16)
   end

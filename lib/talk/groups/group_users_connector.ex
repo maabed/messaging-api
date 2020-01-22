@@ -31,8 +31,8 @@ defmodule Talk.GroupUsers.Connector do
     base_query =
       from gu in GroupUser,
         where: gu.group_id == ^group.id,
-        join: u in assoc(gu, :user),
-        select: %{gu | username: u.username}
+        join: p in assoc(gu, :profile),
+        select: %{gu | username: p.username}
 
     wrapped_query = from(gu in subquery(base_query))
     Pagination.fetch_result(wrapped_query, Args.build(args))
@@ -42,7 +42,7 @@ defmodule Talk.GroupUsers.Connector do
     if current_user == user do
       base_query =
         from gu in GroupUser,
-          where: gu.user_id == ^user.id,
+          where: gu.profile_id == ^user.profile_id,
           join: g in Group,
           on: g.id == gu.group_id,
           select: %{gu | name: g.name}

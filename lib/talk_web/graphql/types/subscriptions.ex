@@ -100,7 +100,7 @@ defmodule TalkWeb.Type.Subscriptions do
       @desc "Triggered when a users/messages related event occurs."
       field :user_subscription, :user_subscription_response do
         config fn _, %{context: %{user: user}} ->
-          {:ok, topic: user.id}
+          {:ok, topic: user.profile_id}
         end
       end
 

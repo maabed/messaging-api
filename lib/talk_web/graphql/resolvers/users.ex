@@ -3,11 +3,11 @@ defmodule TalkWeb.Resolver.Users do
 
   import Ecto.Query, warn: false
 
-  alias Ecto.Changeset
   alias Talk.Users
+  alias Talk.AssetStore
   alias Talk.Schemas.User
   alias Talk.Users.Connector
-  alias TalkWeb.Resolver.Helpers
+  require Logger
 
   @type info :: %{context: %{user: User.t(), loader: Dataloader.t()}}
   @type paginated_result :: {:ok, Pagination.Result.t()} | {:error, String.t()}
@@ -17,7 +17,7 @@ defmodule TalkWeb.Resolver.Users do
 
   @spec user(map(), info()) :: {:ok, User.t()} | {:error, String.t()}
   def user(%{id: user_id} = _args, %{context: %{user: user}} = _info) do
-    case Users.get_user(user, user_id) do
+    case Users.get_user_by_id(user, user_id) do
       {:ok, %{user: user}} ->
         {:ok, user}
 
@@ -53,36 +53,36 @@ defmodule TalkWeb.Resolver.Users do
     Connector.get(user, struct(Connector, args), info)
   end
 
+  @spec avatar_url(User.t(), map(), info()) :: paginated_result()
+  def avatar_url(%User{avatar: avatar} = _user, _args, _info) do
+    if avatar do
+      {:ok, AssetStore.avatar_url(avatar)}
+    else
+      {:ok, nil}
+    end
+  end
+
+  @spec avatar_url(map(), map(), info()) :: paginated_result()
+  def avatar_url(%{avatar: avatar} = _profile, _args,  _info) do
+    if avatar do
+      {:ok, AssetStore.avatar_url(avatar)}
+    else
+      {:ok, nil}
+    end
+  end
+
+  @spec search(map(), info()) :: paginated_result()
+  def search(args, info) do
+    Connector.search(struct(Connector, args), info)
+  end
+
+  @spec is_following(map(), map(), info()) :: paginated_result()
+  def is_following(profile, _,  %{context: %{user: user}} = _info) do
+    {:ok, Users.is_following?(user, profile.id)}
+  end
+
   @spec followers(User.t(), map(), info()) :: paginated_result()
-  def followers(%User{} = user, args, %{context: %{user: _user}} = info) do
+  def followers(%User{} = user, args, info) do
     Connector.get_followers(user, struct(Connector, args), info)
-  end
-
-  @spec update_user(map(), info()) :: user_mutation_result()
-  def update_user(args, %{context: %{user: user}}) do
-    case Users.update_user(user, args) do
-      {:ok, user} ->
-        {:ok, %{success: true, user: user, errors: []}}
-
-      {:error, %Changeset{} = changeset} ->
-        {:ok, %{success: false, user: nil, errors: Helpers.format_errors(changeset)}}
-
-      err ->
-        err
-    end
-  end
-
-  @spec update_user_avatar(map(), info()) :: user_mutation_result()
-  def update_user_avatar(%{data: data}, %{context: %{user: user}}) do
-    case Users.update_avatar(user, data) do
-      {:ok, user} ->
-        {:ok, %{success: true, user: user, errors: []}}
-
-      {:error, %Changeset{} = changeset} ->
-        {:ok, %{success: false, user: nil, errors: Helpers.format_errors(changeset)}}
-
-      _ ->
-        {:ok, %{success: false, user: nil, errors: []}}
-    end
   end
 end

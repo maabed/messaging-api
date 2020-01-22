@@ -13,17 +13,12 @@ defmodule Talk.Repo.Migrations.UpdateTimestamps do
 
   def change do
     fixup(:groups, [:inserted_at, :updated_at])
-
     fixup(:group_users, [:inserted_at, :updated_at])
-
     fixup(:messages, [:inserted_at, :updated_at])
-
-    fixup(:message_users, [:inserted_at, :updated_at])
-
-    fixup(:files, [:inserted_at, :updated_at])
-
-    fixup(:message_files, [:inserted_at])
-
-    fixup(:user_log, [:happen_at])
+    fixup(:message_groups, [:inserted_at, :updated_at])
+    fixup(:message_reactions, [:inserted_at, :updated_at])
+    fixup(:message_logs, [:happen_at])
+    fixup(:media_object, [:inserted_at, :updated_at])
+    fixup(:chat_reports, [:inserted_at, :updated_at])
   end
 end

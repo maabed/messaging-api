@@ -6,8 +6,8 @@ defmodule Talk.Groups do
 
   alias Talk.Repo
   alias Ecto.Changeset
-  alias Talk.{Groups, Events, Users}
-  alias Talk.Schemas.{Group, GroupUser, Message, MessageGroup, User}
+  alias Talk.{Groups, Events}
+  alias Talk.Schemas.{Group, GroupUser, Message, MessageGroup, Profile, User}
 
   @spec groups_base_query(User.t()) :: Ecto.Query.t()
   def groups_base_query(user), do: Groups.Query.base_query(user)
@@ -22,13 +22,13 @@ defmodule Talk.Groups do
   def get_accessor_ids(%Group{id: group_id, is_private: is_private}) do
     query =
       if is_private do
-        from u in User,
-          join: gu in assoc(u, :group_users),
+        from p in Profile,
+          join: gu in assoc(p, :group_users),
           where: gu.group_id == ^group_id,
-          select: u.id
+          select: p.id
       else
-        from u in User,
-          select: u.id
+        from p in Profile,
+          select: p.id
       end
 
     {:ok, Repo.all(query)}
@@ -78,8 +78,9 @@ defmodule Talk.Groups do
   end
 
   @spec get_group_by_message_id(String.t(), String.t()) :: {:ok, Group.t()} | {:error, String.t()}
-  def get_group_by_message_id(user_id, message_id) do
-    {:ok, user} = Users.get_user_by_id(user_id)
+  def get_group_by_message_id(profile_id, message_id) do
+    # {:ok, user} = Users.get_user_by_profile_id(profile_id)
+    user = %User{profile_id: profile_id}
 
     query =
       from g in groups_base_query(user),
@@ -109,9 +110,9 @@ defmodule Talk.Groups do
   def group_exists?(nil), do: {:ok, false}
 
   @spec get_group_user(Group.t(), User.t()) :: {:ok, GroupUser.t() | nil}
-  def get_group_user(%Group{id: group_id}, %User{id: user_id}) do
+  def get_group_user(%Group{id: group_id}, %User{profile_id: profile_id}) do
     GroupUser
-    |> Repo.get_by(user_id: user_id, group_id: group_id)
+    |> Repo.get_by(profile_id: profile_id, group_id: group_id)
     |> handle_get_group_user()
   end
 
@@ -123,8 +124,8 @@ defmodule Talk.Groups do
     usernames = Enum.uniq([user.username | recipient_usernames])
 
     query =
-      from u in User,
-        where: u.username in ^usernames
+      from p in Profile,
+        where: p.username in ^usernames
 
     case Repo.all(query) do
       [] -> {:error, :recipients_not_found}
@@ -146,7 +147,7 @@ defmodule Talk.Groups do
             params_with_relations =
               params
               |> Map.delete(:recipient_usernames)
-              |> Map.put(:user_id, user.id)
+              |> Map.put(:profile_id, user.profile_id)
               |> Map.put(:name, "d-#{group_name}")
 
             %Group{}
@@ -155,7 +156,7 @@ defmodule Talk.Groups do
             |> after_create_group(user, recipients)
 
           # change when add support for groups > 2 users
-          len when len > 2 -> {:error, :more_than_two_recipients}
+          recipient_count when recipient_count > 2 -> {:error, :more_than_two_recipients}
           _ -> {:error, :error}
         end
     end
@@ -199,7 +200,7 @@ defmodule Talk.Groups do
       from gu in subquery(base_query),
         left_join: m in Message,
         on: m.id == ^msg_id,
-        where: m.user_id != gu.user_id,
+        where: m.profile_id != gu.profile_id,
         order_by: {:asc, gu.username}
 
     {:ok, Repo.all(query)}
@@ -211,7 +212,7 @@ defmodule Talk.Groups do
 
     query =
       from gu in subquery(base_query),
-        where: gu.state in ["SUBSCRIBED", "UNSUBSCRIBED"],
+        where: gu.status in ["SUBSCRIBED", "UNSUBSCRIBED"],
         order_by: {:asc, gu.username}
 
     {:ok, Repo.all(query)}
@@ -233,14 +234,14 @@ defmodule Talk.Groups do
   def bookmark_group(group, user) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: user.profile_id,
         group_id: group.id,
         bookmarked: true
       })
 
     opts = [
       on_conflict: [set: [bookmarked: true]],
-      conflict_target: [:user_id, :group_id]
+      conflict_target: [:profile_id, :group_id]
     ]
 
     changeset
@@ -249,7 +250,7 @@ defmodule Talk.Groups do
   end
 
   defp after_bookmarked({:ok, _}, group, user) do
-    Events.group_bookmarked(user.id, group)
+    Events.group_bookmarked(user.profile_id, group)
     :ok
   end
 
@@ -259,14 +260,14 @@ defmodule Talk.Groups do
   def unbookmark_group(group, user) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: user.profile_id,
         group_id: group.id,
         bookmarked: false
       })
 
     opts = [
       on_conflict: [set: [bookmarked: false]],
-      conflict_target: [:user_id, :group_id]
+      conflict_target: [:profile_id, :group_id]
     ]
 
     changeset
@@ -275,22 +276,24 @@ defmodule Talk.Groups do
   end
 
   defp after_unbookmark({:ok, _}, group, user) do
-    Events.group_unbookmarked(user.id, group)
+    Events.group_unbookmarked(user.profile_id, group)
     :ok
   end
 
   defp after_unbookmark(err, _, _), do: err
 
-  @spec list_bookmarks(User.t()) :: [Group.t()] | no_return()
-  def list_bookmarks(user) do
-    base_query = groups_base_query(user)
+  @spec list_bookmarks(User.t(), User.t()) :: {:ok, [Group.t()]} | {:ok, nil}
+  def list_bookmarks(user, current_user) do
+    if user.id == current_user.id do
+      query =
+        from [g, u, gu] in groups_base_query(user),
+          where: gu.bookmarked == true,
+          order_by: {:asc, gu.inserted_at}
 
-    query =
-      from gu in subquery(base_query),
-        where: gu.bookmarked == true,
-        order_by: {:asc, gu.inserted_at}
-
-    {:ok, Repo.all(query)}
+      {:ok, Repo.all(query)}
+    else
+      {:ok, nil}
+    end
   end
 
   @spec is_bookmarked?(GroupUser.t() | nil) :: {:ok, boolean()}
@@ -303,7 +306,7 @@ defmodule Talk.Groups do
   @spec close_group(Group.t()) :: {:ok, Group.t()} | {:error, Changeset.t()}
   def close_group(group) do
     group
-    |> Changeset.change(state: "CLOSED")
+    |> Changeset.change(status: "CLOSED")
     |> Repo.update()
     |> after_update_group()
   end
@@ -311,7 +314,7 @@ defmodule Talk.Groups do
   @spec reopen_group(Group.t()) :: {:ok, Group.t()} | {:error, Changeset.t()}
   def reopen_group(group) do
     group
-    |> Changeset.change(state: "OPEN")
+    |> Changeset.change(status: "OPEN")
     |> Repo.update()
     |> after_update_group()
   end
@@ -322,7 +325,7 @@ defmodule Talk.Groups do
     case get_user_role(group, current_user) do
       :owner ->
         group
-        |> Changeset.change(state: "DELETED")
+        |> Changeset.change(status: "DELETED")
         |> Repo.update()
         |> after_update_group()
 
@@ -331,53 +334,53 @@ defmodule Talk.Groups do
     end
   end
 
-  @spec subscribe(Group.t(), User.t()) :: :ok | {:error, Changeset.t()}
-  def subscribe(%Group{} = group, %User{} = user) do
+  @spec subscribe(Group.t(), Profile.t()) :: :ok | {:error, Changeset.t()}
+  def subscribe(%Group{} = group, %Profile{} = profile) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: profile.id,
         group_id: group.id,
-        state: "SUBSCRIBED"
+        status: "SUBSCRIBED"
       })
 
     opts = [
-      on_conflict: [set: [state: "SUBSCRIBED"]],
-      conflict_target: [:user_id, :group_id]
+      on_conflict: [set: [status: "SUBSCRIBED"]],
+      conflict_target: [:profile_id, :group_id]
     ]
 
     changeset
     |> Repo.insert(opts)
-    |> after_subscribe(group, user)
+    |> after_subscribe(group, profile)
   end
 
-  defp after_subscribe({:ok, _}, group, user) do
-    Events.subscribed_to_group(group.id, group, user)
+  defp after_subscribe({:ok, _}, group, profile) do
+    Events.subscribed_to_group(group.id, group, profile)
     :ok
   end
 
   defp after_subscribe(err, _, _), do: err
 
-  @spec unsubscribe(Group.t(), User.t()) :: :ok | {:error, Changeset.t()}
-  def unsubscribe(%Group{} = group, %User{} = user) do
+  @spec unsubscribe(Group.t(), Profile.t()) :: :ok | {:error, Changeset.t()}
+  def unsubscribe(%Group{} = group, %Profile{} = profile) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: profile.id,
         group_id: group.id,
-        state: "UNSUBSCRIBED"
+        status: "UNSUBSCRIBED"
       })
 
     opts = [
-      on_conflict: [set: [state: "UNSUBSCRIBED"]],
-      conflict_target: [:user_id, :group_id]
+      on_conflict: [set: [status: "UNSUBSCRIBED"]],
+      conflict_target: [:profile_id, :group_id]
     ]
 
     changeset
     |> Repo.insert(opts)
-    |> after_unsubscribe(group, user)
+    |> after_unsubscribe(group, profile)
   end
 
-  defp after_unsubscribe({:ok, _}, group, user) do
-    Events.unsubscribed_from_group(group.id, group, user)
+  defp after_unsubscribe({:ok, _}, group, profile) do
+    Events.unsubscribed_from_group(group.id, group, profile)
     :ok
   end
 
@@ -387,14 +390,14 @@ defmodule Talk.Groups do
   def mute(%Group{} = group, %User{} = user) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: user.profile_id,
         group_id: group.id,
-        state: "MUTED"
+        status: "MUTED"
       })
 
     opts = [
-      on_conflict: [set: [state: "MUTED"]],
-      conflict_target: [:user_id, :group_id]
+      on_conflict: [set: [status: "MUTED"]],
+      conflict_target: [:profile_id, :group_id]
     ]
 
     changeset
@@ -403,7 +406,7 @@ defmodule Talk.Groups do
   end
 
   defp after_mute({:ok, _}, group, user) do
-    Events.group_muted(group.id, group, user)
+    Events.group_muted(group.id, group, user.profile)
     :ok
   end
 
@@ -413,14 +416,14 @@ defmodule Talk.Groups do
   def archive(%Group{} = group, %User{} = user) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: user.profile_id,
         group_id: group.id,
-        state: "ARCHIVED"
+        status: "ARCHIVED"
       })
 
     opts = [
-      on_conflict: [set: [state: "ARCHIVED"]],
-      conflict_target: [:user_id, :group_id]
+      on_conflict: [set: [status: "ARCHIVED"]],
+      conflict_target: [:profile_id, :group_id]
     ]
 
     changeset
@@ -429,7 +432,7 @@ defmodule Talk.Groups do
   end
 
   defp after_archive({:ok, _}, group, user) do
-    Events.group_archived(group.id, group, user)
+    Events.group_archived(group.id, group, user.profile)
     :ok
   end
 
@@ -449,13 +452,13 @@ defmodule Talk.Groups do
     |> Repo.update()
   end
 
-  @spec get_user_state(Group.t(), User.t()) :: :subscribed | :unsubscribed | :muted | :archived | nil
-  def get_user_state(%Group{} = group, user) do
+  @spec get_user_status(Group.t(), User.t()) :: :subscribed | :unsubscribed | :muted | :archived | nil
+  def get_user_status(%Group{} = group, user) do
     case get_group_user(group, user) do
-      {:ok, %GroupUser{state: "SUBSCRIBED"}} -> :subscribed
-      {:ok, %GroupUser{state: "UNSUBSCRIBED"}} -> :unsubscribed
-      {:ok, %GroupUser{state: "MUTED"}} -> :muted
-      {:ok, %GroupUser{state: "ARCHIVED"}} -> :archived
+      {:ok, %GroupUser{status: "SUBSCRIBED"}} -> :subscribed
+      {:ok, %GroupUser{status: "UNSUBSCRIBED"}} -> :unsubscribed
+      {:ok, %GroupUser{status: "MUTED"}} -> :muted
+      {:ok, %GroupUser{status: "ARCHIVED"}} -> :archived
       _ -> nil
     end
   end
@@ -470,18 +473,18 @@ defmodule Talk.Groups do
     end
   end
 
-  @spec set_owner_role(Group.t(), User.t()) :: :ok | {:error, Changeset.t()}
-  def set_owner_role(%Group{} = group, %User{} = user) do
+  @spec set_owner_role(Group.t(), Profile.t()) :: :ok | {:error, Changeset.t()}
+  def set_owner_role(%Group{} = group, %Profile{} = profile) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: profile.id,
         group_id: group.id,
         role: "OWNER"
       })
 
     opts = [
       on_conflict: [set: [role: "OWNER"]],
-      conflict_target: [:user_id, :group_id]
+      conflict_target: [:profile_id, :group_id]
     ]
 
     case Repo.insert(changeset, opts) do
@@ -490,18 +493,18 @@ defmodule Talk.Groups do
     end
   end
 
-  @spec set_admin_role(Group.t(), User.t()) :: :ok | {:error, Changeset.t()}
-  def set_admin_role(%Group{} = group, %User{} = user) do
+  @spec set_admin_role(Group.t(), Profile.t()) :: :ok | {:error, Changeset.t()}
+  def set_admin_role(%Group{} = group, %Profile{} = profile) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: profile.id,
         group_id: group.id,
         role: "ADMIN"
       })
 
     opts = [
       on_conflict: [set: [role: "ADMIN"]],
-      conflict_target: [:user_id, :group_id]
+      conflict_target: [:profile_id, :group_id]
     ]
 
     case Repo.insert(changeset, opts) do
@@ -510,18 +513,18 @@ defmodule Talk.Groups do
     end
   end
 
-  @spec set_member_role(Group.t(), User.t()) :: :ok | {:error, Changeset.t()}
-  def set_member_role(%Group{} = group, %User{} = user) do
+  @spec set_member_role(Group.t(), Profile.t()) :: :ok | {:error, Changeset.t()}
+  def set_member_role(%Group{} = group, %Profile{} = profile) do
     changeset =
       Changeset.change(%GroupUser{}, %{
-        user_id: user.id,
+        profile_id: profile.id,
         group_id: group.id,
         role: "MEMBER"
       })
 
     opts = [
       on_conflict: [set: [role: "MEMBER"]],
-      conflict_target: [:user_id, :group_id]
+      conflict_target: [:profile_id, :group_id]
     ]
 
     case Repo.insert(changeset, opts) do
