@@ -50,13 +50,8 @@ defmodule TalkWeb.Type.User do
       resolve &UserResolver.user/2
     end
 
-    field :users_search, list_of(:profile_pagination) do
-      arg :first, :integer
-      arg :last, :integer
-      arg :before, :timestamp
-      arg :after, :timestamp
-      arg :order_by, :user_order
-      arg :term, non_null(:string)
+    field :users_search, list_of(:user_search_result) do
+        arg :term, non_null(:string)
       resolve &UserResolver.search/2
     end
   end

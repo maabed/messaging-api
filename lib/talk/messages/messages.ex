@@ -105,13 +105,6 @@ defmodule Talk.Messages do
     result
   end
 
-  @spec mark_as_unread(User.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}
-  def mark_as_unread(%User{} = user, group, messages) do
-    user.profile_id
-    |> update_users_read_statuss(group, messages, %{read_status: "UNREAD"})
-    |> after_mark_as_unread(user.profile)
-  end
-
   @spec mark_as_unread(Profile.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}
   def mark_as_unread(%Profile{} = profile, group, messages) do
     profile.id
@@ -126,13 +119,6 @@ defmodule Talk.Messages do
 
     Events.messages_marked_as_unread(profile.id, messages)
     result
-  end
-
-  @spec mark_as_read(User.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}
-  def mark_as_read(%User{} = user, group, messages) do
-    user.profile_id
-    |> update_users_read_statuss(group, messages, %{read_status: "READ"})
-    |> after_mark_as_read(user.profile)
   end
 
   @spec mark_as_read(Profile.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}

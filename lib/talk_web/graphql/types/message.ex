@@ -61,7 +61,7 @@ defmodule TalkWeb.Type.Message do
 
   object :message_reaction do
     field :id, non_null(:id)
-    field :user, non_null(:user), resolve: dataloader(:db)
+    field :profile, non_null(:profile), resolve: dataloader(:db)
     field :message, :message, resolve: dataloader(:db)
     field :value, :string
   end

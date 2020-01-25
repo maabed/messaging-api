@@ -143,7 +143,7 @@ defmodule TalkWeb.Resolver.Messages do
   def mark_as_unread(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
          {:ok, messages} <- Messages.get_messages(user, args.message_ids),
-         {:ok, unread_messages} <- Messages.mark_as_unread(user, group, messages) do
+         {:ok, unread_messages} <- Messages.mark_as_unread(user.profile, group, messages) do
       {:ok, %{success: true, messages: unread_messages, errors: []}}
     else
       {:error, changeset} ->
@@ -157,7 +157,7 @@ defmodule TalkWeb.Resolver.Messages do
   def mark_as_read(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
          {:ok, messages} <- Messages.get_messages(user, args.message_ids),
-         {:ok, read_messages} <- Messages.mark_as_read(user, group, messages) do
+         {:ok, read_messages} <- Messages.mark_as_read(user.profile, group, messages) do
       {:ok, %{success: true, messages: read_messages, errors: []}}
     else
       {:error, changeset} ->

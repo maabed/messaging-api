@@ -82,16 +82,14 @@ defmodule Talk.Messages.CreateMessage do
   defp subscribe_recipients(message, group, user, %{recipient_usernames: usernames}) do
     query =
       from p in Profile,
-        join: u in assoc(p, :user),
         where: p.username in ^usernames
 
     recipients = Repo.all(query)
-
     Enum.each(recipients, fn recipient ->
-      if recipient.id === user.id do
-        Messages.mark_as_read(recipient.user, group, [message])
+      if recipient.user_id === user.id do
+        Messages.mark_as_read(recipient, group, [message])
       else
-        Messages.mark_as_unread(recipient.user, group, [message])
+        Messages.mark_as_unread(recipient, group, [message])
       end
     end)
   end
@@ -103,7 +101,7 @@ defmodule Talk.Messages.CreateMessage do
     group_users = Repo.preload(group_users, :profile)
 
     Enum.each(group_users, fn group_user ->
-      if group_user.user.id === user.id do
+      if group_user.profile.user_id === user.id do
         Messages.mark_as_read(group_user.profile, group, [message])
       else
         Messages.mark_as_unread(group_user.profile, group, [message])

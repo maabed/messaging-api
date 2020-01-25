@@ -161,6 +161,7 @@ defmodule Talk.Users do
       distinct: true
     )
     |> apply_rank_query(term)
+    |> handle_users_search_results()
     # using similarity
     # where: fragment("similarity(?, ?) > ?", p.username, ^term, 0.2) or
     #        fragment("similarity(?, ?) > ?", p.display_name, ^term, 0.2)
@@ -180,7 +181,15 @@ defmodule Talk.Users do
           p.username, ^term, p.display_name, ^term
         )
       },
+      limit: 20,
       order_by: fragment("rank DESC")
+  end
+
+  def handle_users_search_results(query) do
+    case Repo.all(from(su in subquery(query))) do
+      [] -> {:ok, nil}
+      results -> {:ok, results}
+    end
   end
 
   @spec followers_query(User.t()) :: Ecto.Query.t()
