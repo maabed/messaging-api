@@ -62,15 +62,11 @@ defmodule Talk.Users.Connector do
     |> process_args(args)
   end
 
-  defp process_args(_user, %{term: nil}), do: {:error, :no_results}
-  defp process_args(_user, %{term: term}) when term === "", do: {:error, :no_results}
-  defp process_args(_user, %{term: term} = _args) when not is_binary(term), do: {:error, :no_results}
-  defp process_args(user, %{term: term} = args) do
-    base_query =
-      "%" <> term <> "%"
-      |> Users.users_search_base_query(user)
-
-    wrapped_query = from(su in subquery(base_query))
-    Pagination.fetch_result(wrapped_query, Args.build(args))
+  defp process_args(_user, %{term: nil}), do: nil
+  defp process_args(_user, %{term: term}) when term === "", do: nil
+  defp process_args(_user, %{term: term} = _args) when not is_binary(term), do: nil
+  defp process_args(user, %{term: term} = _args) do
+    "%" <> term <> "%"
+    |> Users.users_search_base_query(user)
   end
 end
