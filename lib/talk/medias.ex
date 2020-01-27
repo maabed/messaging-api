@@ -11,7 +11,7 @@ defmodule Talk.Medias do
 
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
-  @gif_service_url Application.get_env(:talk, :gif_service_url)
+  @giphy_html5_url Application.get_env(:talk, :giphy_html5_url)
   @allowed_format ~w(.jpg .jpeg .gif .png .gif .svg)
 
   def media_url(%Media{} = media) do
@@ -109,7 +109,7 @@ defmodule Talk.Medias do
     Multi.new()
     |> Multi.insert(:media, Media.create_changeset(%Media{}, params))
     |> Multi.run(:url, fn _, %{media: %Media{filename: filename}} ->
-        {:ok, @gif_service_url <> "/" <> filename}
+        {:ok, @giphy_html5_url <> "/" <> filename}
     end)
     |> Repo.transaction()
     |> serialize_response()

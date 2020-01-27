@@ -1,6 +1,6 @@
-defmodule Talk.Schemas.ChatReport do
+defmodule Talk.Schemas.Report do
   @moduledoc """
-  The ChatReport schema.
+  The Report schema.
   """
   use Ecto.Schema
   import Ecto.Changeset
@@ -10,8 +10,8 @@ defmodule Talk.Schemas.ChatReport do
   @type t :: %__MODULE__{}
   @timestamps_opts [type: :utc_datetime_usec]
   schema "chat_reports" do
-    field :type, :string # spam, abuse, suspended, content policy, other
-    field :status, :string # active, dismissed, deleted
+    field :type, :string, default: "spam" # spam, abuse, suspended, content policy, other
+    field :status, :string, default: "active" # active, dismissed, deleted
     field :reason, :string
 
     belongs_to :message, Message
@@ -33,7 +33,7 @@ defmodule Talk.Schemas.ChatReport do
 
   def create_changeset(struct, attrs) do
     struct
-    |> cast(attrs, [:type, :status, :reason, :author_id, :reporter_id, :message_id])
+    |> cast(attrs, [:type, :reason, :author_id, :reporter_id, :message_id])
     |> validate_required([:author_id, :reporter_id, :message_id])
   end
 

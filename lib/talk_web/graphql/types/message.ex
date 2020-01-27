@@ -64,7 +64,6 @@ defmodule TalkWeb.Type.Message do
     field :profile_id, non_null(:string)
     field :user_id, non_null(:string)
     field :username, non_null(:string)
-    # field :profile, non_null(:profile), resolve: dataloader(:db)
   end
 
   object :message_reaction do
@@ -94,6 +93,22 @@ defmodule TalkWeb.Type.Message do
     field :errors, list_of(:error)
     field :message, :message
     field :reaction, :message_reaction
+  end
+
+  object :report do
+    field :message_id, non_null(:id)
+    field :reporter_id, non_null(:id)
+    field :author_id, non_null(:id)
+    field :status, :string
+    field :reason, :string
+    field :type, :string
+  end
+
+  object :report_mutation_response do
+    interface :response
+    field :success, non_null(:boolean)
+    field :errors, list_of(:error)
+    field :report, :report
   end
 
   # message queries
@@ -155,6 +170,14 @@ defmodule TalkWeb.Type.Message do
       arg :message_id, non_null(:id)
       arg :value, non_null(:string)
       resolve &Resolver.delete_message_reaction/2
+    end
+
+    field :create_report, :report_mutation_response do
+      arg :type, :string
+      arg :reason, non_null(:id)
+      arg :message_id, non_null(:id)
+      arg :author_id, non_null(:id)
+      resolve &Resolver.create_report/2
     end
   end
 

@@ -17,6 +17,7 @@ defmodule Talk.Messages do
     MessageReaction,
     MessageLog,
     Profile,
+    Report,
     User
   }
 
@@ -329,4 +330,26 @@ defmodule Talk.Messages do
   end
 
   defp handle_get_message_read_status(message_groups), do: {:ok, message_groups}
+
+  @spec create_report(User.t(), Message.t(), map()) :: create_message_result()
+  def create_report(%User{} = user, %Message{} = message, %{author_id: author_id, reason: reason, type: type}) do
+    params = %{
+      reporter_id: user.profile_id,
+      author_id: author_id,
+      message_id: message.id,
+      reason: reason,
+      type: type
+    }
+
+    %Report{}
+    |> Report.create_changeset(params)
+    |> Repo.insert(on_conflict: :nothing, returning: true)
+    |> after_create_report(user)
+  end
+
+  defp after_create_report({:ok, report}, _user) do
+    {:ok, report}
+  end
+
+  defp after_create_report(err, _), do: err
 end

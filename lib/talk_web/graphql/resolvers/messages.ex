@@ -7,7 +7,7 @@ defmodule TalkWeb.Resolver.Messages do
 
   alias Ecto.Changeset
   alias Talk.{Groups, Messages, Medias, Users}
-  alias Talk.Schemas.{Group, Message, User}
+  alias Talk.Schemas.{Group, Message, Report, User}
   alias TalkWeb.Resolver.Helpers
   alias Talk.Messages.Connector
   alias Talk.Reactions.Connector, as: ReactionConnector
@@ -23,6 +23,8 @@ defmodule TalkWeb.Resolver.Messages do
               message: Message.t() | nil,
               reaction: MessageReaction.t() | nil
           }} | {:error, String.t()}
+@type reoprt_mutation_result :: {:ok, %{success: boolean(), report: Report.t() | nil,
+      errors: [%{attribute: String.t(), message: String.t()}]}} | {:error, String.t()}
 
   def messages(%Group{} = group, args, info) do
     Connector.get(group, struct(Connector, args), info)
@@ -203,6 +205,20 @@ defmodule TalkWeb.Resolver.Messages do
     else
       {:error, changeset} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+      err ->
+        err
+    end
+  end
+
+  @spec create_report(map(), info()) :: message_reaction_result()
+  def create_report(args, %{context: %{user: user}}) do
+    with {:ok, message} <- Messages.get_message(user, args.message_id),
+         {:ok, report} <- Messages.create_report(user, message, args) do
+      {:ok, %{success: true, errors: [], report: report}}
+    else
+      {:error, %Changeset{} = changeset} ->
+        {:ok, %{success: false, errors: Helpers.format_errors(changeset), message: nil}}
+
       err ->
         err
     end

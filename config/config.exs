@@ -1,6 +1,6 @@
 import Config
 
-origins = ["//localhost:3000", "//*.sapien.network"]
+origins = ["//localhost:3000", "//localhost:7000", "//*.sapien.network"]
 audience = ["sapien.network", "beta.sapien.network", "talk.sapien.network", "notifier.sapien.network"]
 
 config :talk,
@@ -9,7 +9,8 @@ config :talk,
   jwt_aud: audience,
   user_agent_req: false,
   allowed_origins: origins,
-  gif_service_url: "https://media.giphy.com/media/"
+  giphy_gif_url: "https://media.giphy.com/media",
+  giphy_html5_url: "https://giphy.com/gifs"
 
 config :talk, Talk.Repo,
   adapter: Ecto.Adapters.Postgres,
