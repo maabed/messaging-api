@@ -11,7 +11,15 @@ defmodule TalkWeb.Type.Message do
   object :message do
     field :id, non_null(:id)
     field :content, :string
-    field :media, :media
+    field :media, :media do
+      resolve fn message, _, _ ->
+        if message.media do
+          {:ok, message.media}
+        else
+          {:ok, nil}
+        end
+      end
+    end
     field :status, non_null(:message_status)
     field :groups, list_of(:group), resolve: dataloader(:db)
     field :sender, non_null(:user), resolve: &Resolver.message_sender/3
@@ -42,13 +50,13 @@ defmodule TalkWeb.Type.Message do
   end
 
   object :media do
-    field :id, non_null(:id)
-    field :url, non_null(:string)
+    field :id, :id
+    field :url, :string
     field :size, :integer
     field :type, :string
-    field :filename, non_null(:string)
-    field :extension, non_null(:string)
-    field :inserted_at, non_null(:time)
+    field :filename, :string
+    field :extension, :string
+    field :inserted_at, :time
   end
 
   object :reader do
