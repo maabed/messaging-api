@@ -49,9 +49,7 @@ defmodule Talk.Medias do
   def upload_media(%User{profile_id: profile_id} = _user, media_id, %Message{id: message_id} = _message) do
     case validate_media(media_id) do
       {true, ext} ->
-        ext
-        |> rename_media()
-        |> store_media(ext, profile_id, to_string(message_id))
+        store_media(media_id, ext, profile_id, to_string(message_id))
       {false, _} ->
         {:error, :file_type_not_allowed}
     end
@@ -92,7 +90,12 @@ defmodule Talk.Medias do
       |> @adapter.public_url(@bucket)
     end)
     |> Repo.transaction()
-    |> serialize_response()
+    |> case do
+      {:ok, %{media: media, url: url}} ->
+       serialize_response(media, url)
+      {:error, :url, _} ->
+        {:error, :upload_to_store_error}
+    end
   end
 
   defp store_media(_, _, err, _, _), do: err
@@ -112,23 +115,24 @@ defmodule Talk.Medias do
         {:ok, @giphy_html5_url <> "/" <> filename}
     end)
     |> Repo.transaction()
-    |> serialize_response()
-
-  end
-
-  def serialize_response(media) do
-    case media do
+    |> case do
       {:ok, %{media: media, url: url}} ->
-        media =
-          media
-          |> Map.delete(:__struct__)
-          |> Map.delete(:__meta__)
-          |> Map.put(:url, url)
-          |> Enum.into(%{})
-        {:ok, media }
-
+       serialize_response(media, url)
       {:error, :url, _} ->
         {:error, :upload_to_store_error}
     end
+
+  end
+
+  def serialize_response(media, url) do
+    Logger.warn("media =>> #{inspect media}")
+    media =
+      media
+      |> Map.delete(:__struct__)
+      |> Map.delete(:__meta__)
+      |> Map.put(:url, url)
+      |> Enum.into(%{})
+
+    {:ok, media }
   end
 end

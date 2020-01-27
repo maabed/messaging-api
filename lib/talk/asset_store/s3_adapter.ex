@@ -2,6 +2,7 @@ defmodule Talk.AssetStore.S3Adapter do
   @moduledoc false
 
   alias ExAws.S3
+  @cdn_url if Mix.env() == :dev, do: "https://images-local.sapien.network/", else: "https://images.sapien.network/"
 
   @behaviour Talk.AssetStore.Adapter
   require Logger
@@ -25,5 +26,10 @@ defmodule Talk.AssetStore.S3Adapter do
   @impl true
   def public_url("https://" <> _ = full_url, _), do: full_url
   def public_url({:ok, pathname}, bucket), do: {:ok, "https://s3.amazonaws.com/" <> bucket <> "/" <> pathname}
-  def public_url(err, _bucket), do: err
+
+  def public_url({:error, error}, _bucket), do: error
+
+  def avatar_public_url(pathname, bucket) do
+    @cdn_url <> bucket <> "/" <> pathname
+  end
 end

@@ -26,7 +26,7 @@ defmodule Talk.AssetStore do
   @doc "Generates the URL for a given avatar filename."
   @spec avatar_url(String.t()) :: String.t()
   def avatar_url(pathname) do
-    @adapter.public_url(pathname, @avatar_bucket)
+    @adapter.avatar_public_url(pathname, @avatar_bucket)
   end
 
   @doc "Uploads a file."

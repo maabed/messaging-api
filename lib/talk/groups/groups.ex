@@ -79,7 +79,6 @@ defmodule Talk.Groups do
 
   @spec get_group_by_message_id(String.t(), String.t()) :: {:ok, Group.t()} | {:error, String.t()}
   def get_group_by_message_id(profile_id, message_id) do
-    # {:ok, user} = Users.get_user_by_profile_id(profile_id)
     user = %User{profile_id: profile_id}
 
     query =

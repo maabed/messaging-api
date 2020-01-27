@@ -14,6 +14,7 @@ defmodule Talk.Schemas.Profile do
     field :thumbnail, :map, load_in_query: false
     field :display_name, :string, source: :displayName
     field :inserted_at, :utc_datetime_usec, source: :created_at
+    field :updated_at, :utc_datetime_usec
 
     field :avatar, :string, virtual: true # Holds user avatar url
     field :rank, :integer, virtual: true # Holds user rank on search query

@@ -11,6 +11,7 @@ defmodule Talk.Schemas.User do
   schema "users" do
     field :email, :string
     field :inserted_at, :utc_datetime_usec, source: :created_at
+    field :updated_at, :utc_datetime_usec
 
     # Hold profile data
     field :avatar, :string, virtual: true

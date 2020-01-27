@@ -36,8 +36,8 @@ defmodule TalkWeb.Resolver.Messages do
   end
 
   @spec message_sender(Message.t(), map(), info()) :: dataloader_result()
-  def message_sender(%Message{profile_id: profile_id} = _message, _args, %{context: %{user: user}}) when is_binary(profile_id) do
-    Users.get_user_by_profile_id(user, profile_id)
+  def message_sender(%Message{profile_id: profile_id} = _message, _args, _info) when is_binary(profile_id) do
+    Users.get_user_by_profile_id(profile_id)
   end
 
   @spec message_media(Message.t(), map(), info()) :: dataloader_result()
@@ -73,8 +73,8 @@ defmodule TalkWeb.Resolver.Messages do
   end
 
   @spec create_message(map(), info()) :: message_mutation_result()
-  def create_message(%{group_id: group_id, content: content} = args, %{context: %{user: user}}) when is_binary(content) do
-    with {:ok, group} <- Groups.get_group(user, group_id),
+  def create_message(args, %{context: %{user: user}}) do
+    with {:ok, group} <- Groups.get_group(user, args.group_id),
          {:ok, %{message: message, media: media}} <- Messages.create_message(user, group, args) do
           result =
             case is_map(media) and not is_nil(media.url) do

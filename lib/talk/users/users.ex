@@ -47,11 +47,16 @@ defmodule Talk.Users do
   @spec profiles_base_query(User.t()) :: Ecto.Query.t()
   def profiles_base_query(%User{} = _user) do
     from p in Profile,
-      join: u in assoc(p, :user)
-      # where: p.user_id == ^user.id
-    # from u in User,
-    #   join: p in assoc(u, :profile)
-      # where: u.id == ^user.id
+      join: u in assoc(p, :user),
+      select: %{
+        id: p.id,
+        email: u.email,
+        user_id: p.user_id,
+        avatar: fragment("?->>?", p.thumbnail, "avatar"),
+        username: p.username,
+        display_name: p.display_name,
+        inserted_at: p.inserted_at
+      }
   end
 
   @spec get_user_by_id(User.t(), String.t()) :: query_result()
@@ -172,6 +177,7 @@ defmodule Talk.Users do
     from p in query,
       select: %{
         id: p.id,
+        profile_id: p.id,
         user_id: p.user_id,
         avatar: fragment("?->>?", p.thumbnail, "avatar"),
         username: p.username,
@@ -195,8 +201,15 @@ defmodule Talk.Users do
   @spec followers_query(User.t()) :: Ecto.Query.t()
   def followers_query(%User{profile: _profile} = _user) do
     from p in Profile,
-      join: f in assoc(p, :followers)
-      # where: f.following_id == ^profile.id
+      join: f in assoc(p, :followers),
+      select: %{
+        id: p.id,
+        user_id: p.user_id,
+        avatar: fragment("?->>?", p.thumbnail, "avatar"),
+        username: p.username,
+        display_name: p.display_name,
+        inserted_at: p.inserted_at
+      }
   end
 
   @spec followings_query(User.t()) :: Ecto.Query.t()
