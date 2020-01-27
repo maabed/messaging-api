@@ -39,7 +39,6 @@ defmodule TalkWeb.Type.User do
     field :username, non_null(:string)
     field :display_name, non_null(:string)
     field :avatar, :string, resolve: &UserResolver.avatar_url/3
-    interface :profile_entity
   end
 
   object :user_queries do
@@ -57,23 +56,13 @@ defmodule TalkWeb.Type.User do
   end
 
   object :user_search_result do
-    field :id, non_null(:id)
+    field :profile_id, non_null(:id)
     field :user_id, non_null(:id)
     field :username, non_null(:string)
     field :display_name, non_null(:string)
     field :avatar, :string, resolve: &UserResolver.avatar_url/3
     field :is_following, :boolean, resolve: &UserResolver.is_following/3
     field :rank, :float
-    interface :profile_entity
-  end
-
-  interface :profile_entity do
-    field :id, non_null(:id)
-    field :user_id, non_null(:id)
-    field :username, non_null(:string)
-    field :display_name, non_null(:string)
-    field :avatar, :string
-    resolve_type fn _, _ -> nil end
   end
 
   input_object :user_order do
