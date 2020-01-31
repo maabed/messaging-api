@@ -63,6 +63,14 @@ defmodule Talk.Events do
     publish_to_user(id, :messages_marked_as_unread, %{messages: messages})
   end
 
+  def messages_marked_as_request(ids, messages) do
+    publish_to_many_users(ids, :messages_marked_as_request, %{messages: messages})
+  end
+
+  def messages_marked_as_not_request(ids, messages) do
+    publish_to_many_users(ids, :messages_marked_as_not_request, %{messages: messages})
+  end
+
   def message_reaction_created(ids, %Message{} = message, %MessageReaction{} = reaction) do
     publish_to_many_users(ids, :message_reaction_created, %{message: message, reaction: reaction})
   end

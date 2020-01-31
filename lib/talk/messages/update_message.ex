@@ -7,6 +7,7 @@ defmodule Talk.Messages.UpdateMessage do
   alias Ecto.Multi
   alias Talk.{Events, Messages}
   alias Talk.Schemas.{Message, MessageLog, User}
+  require Logger
 
   @spec perform(User.t(), Message.t(), map()) :: {:ok, %{message: Message.t()}}
       | {:error, :unauthorized} | {:error, atom(), any(), map()}
@@ -64,4 +65,48 @@ defmodule Talk.Messages.UpdateMessage do
   end
 
   defp after_update_message(err), do: err
+
+  @spec mark_as_request(User.t(), [Message.t()]) :: {:ok, [Message.t()]}
+  def mark_as_request(%User{} = _user, messages) do
+    update_messages_request_status(messages, %{is_request: true})
+    |> after_mark_as_request()
+  end
+
+  defp after_mark_as_request({:ok, messages} = result) do
+    {:ok, profile_ids} = Messages.get_accessor_ids(Enum.at(messages, 0))
+    Events.messages_marked_as_request(profile_ids, messages)
+    result
+  end
+
+  @spec mark_as_not_request(User.t(), [Message.t()]) :: {:ok, [Message.t()]}
+  def mark_as_not_request(%User{} = _user, messages) do
+    update_messages_request_status(messages, %{is_request: false})
+    |> after_mark_as_not_request()
+  end
+
+  defp after_mark_as_not_request({:ok, messages} = result) do
+    {:ok, profile_ids} = Messages.get_accessor_ids(Enum.at(messages, 0))
+    Events.messages_marked_as_not_request(profile_ids, messages)
+
+    result
+  end
+
+  defp update_messages_request_status(messages, params) do
+    updated_messages =
+      Enum.filter(messages, fn msg ->
+        :ok == update_request_status(msg, params)
+      end)
+
+    {:ok, updated_messages}
+  end
+
+  defp update_request_status(message, params) do
+    message
+    |> Message.update_changeset(params)
+    |> Repo.update()
+    |> after_update_request_status()
+  end
+
+  defp after_update_request_status({:ok, _}), do: :ok
+  defp after_update_request_status(_), do: :error
 end

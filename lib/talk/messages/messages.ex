@@ -79,6 +79,26 @@ defmodule Talk.Messages do
   #   CreateMessage.perform(user, params)
   # end
 
+  @spec get_message_read_status(Group.t(), String.t(), String.t()) :: {:ok, MessageGroup.t() | nil}
+  def get_message_read_status(%Group{id: group_id}, message_id, _profile_id) do
+    query = from mg in MessageGroup,
+      join: p in assoc(mg, :profile),
+      where: mg.group_id == ^group_id,
+      where: mg.message_id == ^message_id,
+      select: %{
+        profile_id: p.id,
+        user_id: p.user_id,
+        username: p.username,
+        read_status: mg.read_status
+      }
+
+    query
+      |> Repo.all
+      |> handle_get_message_read_status
+  end
+
+  defp handle_get_message_read_status(message_groups), do: {:ok, message_groups}
+
   @spec create_message(User.t(), Group.t(), map()) :: create_message_result()
   def create_message(user, group, params) do
     CreateMessage.perform(user, group, params)
@@ -90,6 +110,16 @@ defmodule Talk.Messages do
           | {:error, atom(), any(), map()}
   def update_message(%User{} = user, %Message{} = message, params) do
     UpdateMessage.perform(user, message, params)
+  end
+
+  @spec mark_as_request(Profile.t(), [Message.t()]) :: {:ok, [Message.t()]} | {:error, Changeset.t()}
+  def mark_as_request(%User{} = user, messages) do
+    UpdateMessage.mark_as_request(user, messages)
+  end
+
+  @spec mark_as_not_request(Profile.t(), [Message.t()]) :: {:ok, [Message.t()]} | {:error, Changeset.t()}
+  def mark_as_not_request(%User{} = user, messages) do
+    UpdateMessage.mark_as_not_request(user, messages)
   end
 
   @spec delete_message(User.t(), Message.t()) :: {:ok, Message.t()} | {:error, Changeset.t()}
@@ -109,7 +139,7 @@ defmodule Talk.Messages do
   @spec mark_as_unread(Profile.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}
   def mark_as_unread(%Profile{} = profile, group, messages) do
     profile.id
-    |> update_users_read_statuss(group, messages, %{read_status: "UNREAD"})
+    |> update_users_read_status(group, messages, %{read_status: "UNREAD"})
     |> after_mark_as_unread(profile)
   end
 
@@ -125,7 +155,7 @@ defmodule Talk.Messages do
   @spec mark_as_read(Profile.t(), Group.t(), [Message.t()]) :: {:ok, [Message.t()]}
   def mark_as_read(%Profile{} = profile, group, messages) do
     profile.id
-    |> update_users_read_statuss(group, messages, %{read_status: "READ"})
+    |> update_users_read_status(group, messages, %{read_status: "READ"})
     |> after_mark_as_read(profile)
   end
 
@@ -283,7 +313,7 @@ defmodule Talk.Messages do
 
   defp after_delete_message_reaction(err, _, _), do: err
 
-  defp update_users_read_statuss(profile_id, group, messages, params) do
+  defp update_users_read_status(profile_id, group, messages, params) do
     updated_messages =
       Enum.filter(messages, fn msg ->
         :ok == update_user_status(profile_id, group, msg, params)
@@ -310,26 +340,6 @@ defmodule Talk.Messages do
 
   defp after_update_user_status({:ok, _}), do: :ok
   defp after_update_user_status(_), do: :error
-
-  @spec get_message_read_status(Group.t(), String.t(), String.t()) :: {:ok, MessageGroup.t() | nil}
-  def get_message_read_status(%Group{id: group_id}, message_id, _profile_id) do
-    query = from mg in MessageGroup,
-      join: p in assoc(mg, :profile),
-      where: mg.group_id == ^group_id,
-      where: mg.message_id == ^message_id,
-      select: %{
-        profile_id: p.id,
-        user_id: p.user_id,
-        username: p.username,
-        read_status: mg.read_status
-      }
-
-    query
-      |> Repo.all
-      |> handle_get_message_read_status
-  end
-
-  defp handle_get_message_read_status(message_groups), do: {:ok, message_groups}
 
   @spec create_report(User.t(), Message.t(), map()) :: create_message_result()
   def create_report(%User{} = user, %Message{} = message, %{author_id: author_id, reason: reason, type: type}) do

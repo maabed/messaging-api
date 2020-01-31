@@ -19,7 +19,9 @@ defmodule TalkWeb.Type.Subscriptions do
       :messages_marked_as_read_response,
       :messages_marked_as_unread_response,
       :message_reaction_created_response,
-      :message_reaction_deleted_response
+      :message_reaction_deleted_response,
+      :messages_marked_as_request_response,
+      :messages_marked_as_not_request_response,
     ]
     resolve_type &type_resolver/2
   end
@@ -71,6 +73,14 @@ defmodule TalkWeb.Type.Subscriptions do
   end
 
   object :messages_marked_as_read_response do
+    field :messages, list_of(:message)
+  end
+
+  object :messages_marked_as_request_response do
+    field :messages, list_of(:message)
+  end
+
+  object :messages_marked_as_not_request_response do
     field :messages, list_of(:message)
   end
 

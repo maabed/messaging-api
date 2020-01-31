@@ -534,8 +534,8 @@ defmodule Talk.Groups do
 
   def can_access_group?(user, group_id) do
     case get_group(user, group_id) do
-      {:ok, _} -> true
-      _ -> false
+      {:ok, _} -> {:ok, true}
+      _ -> {:ok, false}
     end
   end
 

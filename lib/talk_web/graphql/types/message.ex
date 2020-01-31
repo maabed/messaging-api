@@ -160,6 +160,18 @@ defmodule TalkWeb.Type.Message do
       resolve &Resolver.mark_as_read/2
     end
 
+    field :mark_as_request, type: :mark_as_unread_response do
+      arg :message_ids, non_null(list_of(:id))
+      arg :group_id, non_null(:id)
+      resolve &Resolver.mark_as_request/2
+    end
+
+    field :mark_as_not_request, type: :mark_as_unread_response do
+      arg :message_ids, non_null(list_of(:id))
+      arg :group_id, non_null(:id)
+      resolve &Resolver.mark_as_not_request/2
+    end
+
     field :create_message_reaction, :message_reaction_mutation_response do
       arg :message_id, non_null(:id)
       arg :value, non_null(:string)
@@ -188,13 +200,13 @@ defmodule TalkWeb.Type.Message do
 
   @desc "Filtering criteria for message connector."
   input_object :message_filters do
-    @desc "Filter by subscription statuss."
+    @desc "Filter by subscription status."
     field :subscribe_status, :subscribe_status_filter, default_value: :all
 
-    @desc "Filter by read statuss."
+    @desc "Filter by read status."
     field :read_status, :read_status_filter, default_value: :all
 
-    @desc "Filter by message statuss."
+    @desc "Filter by message status."
     field :status, :message_status_filter, default_value: :all
 
     @desc "Filter by last activity."

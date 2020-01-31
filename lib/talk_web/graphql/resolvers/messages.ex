@@ -127,6 +127,42 @@ defmodule TalkWeb.Resolver.Messages do
     end
   end
 
+  @spec mark_as_request(map(), info()) :: message_mutation_result()
+  def mark_as_request(args, %{context: %{user: user}}) do
+    with {:ok, true} <- Groups.can_access_group?(user, args.group_id),
+         {:ok, messages} <- Messages.get_messages(user, args.message_ids),
+         {:ok, updated_messages} <- Messages.mark_as_request(user, messages) do
+      {:ok, %{success: true, messages: updated_messages, errors: []}}
+    else
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
+
+      {:error, :updated_message, changeset, _} ->
+        {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
+      err ->
+        err
+    end
+  end
+
+  @spec mark_as_not_request(map(), info()) :: message_mutation_result()
+  def mark_as_not_request(args, %{context: %{user: user}}) do
+    with {:ok, true} <- Groups.can_access_group?(user, args.group_id),
+         {:ok, messages} <- Messages.get_messages(user, args.message_ids),
+         {:ok, updated_messages} <- Messages.mark_as_not_request(user, messages) do
+      {:ok, %{success: true, messages: updated_messages, errors: []}}
+    else
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
+
+      {:error, :updated_message, changeset, _} ->
+        {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
+      err ->
+        err
+    end
+  end
+
   @spec delete_message(map(), info()) :: message_mutation_result()
   def delete_message(args, %{context: %{user: user}}) do
     with {:ok, message} <- Messages.get_message(user, args.message_id),
