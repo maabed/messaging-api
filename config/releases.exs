@@ -4,7 +4,7 @@ config :talk,
   SECRET_KEY_BASE: System.fetch_env!("SECRET_KEY_BASE"),
   asset_store: [
     bucket: System.fetch_env!("ASSET_STORE_BUCKET"),
-    avatar_bucket: System.fetch_env!("ASSET_AVATAR_BUCKET"),
+    avatar_bucket: System.fetch_env!("ASSET_AVATAR_DIR"),
     adapter: Talk.AssetStore.S3Adapter
   ]
 

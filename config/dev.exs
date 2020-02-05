@@ -14,7 +14,7 @@ config :talk, Talk.Repo,
   database: "sapien",
   hostname: "localhost",
   pool_size: 10,
-  log: false
+  log: :debug
 
 config :logger, :console,
   format: "[$level] $message\n",
