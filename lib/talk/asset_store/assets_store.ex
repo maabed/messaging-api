@@ -44,7 +44,7 @@ defmodule Talk.AssetStore do
   end
 
   defp build_file_path(filename) do
-    "uploads/" <> random_alphabet() <> filename
+    "uploads/" <> filename
   end
 
   defp decode_base64_data_url(raw_data) do
