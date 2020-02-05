@@ -3,7 +3,7 @@ defmodule Talk.MixProject do
 
   use Mix.Project
 
-  @elixir_version "~> 1.9"
+  @elixir_version "~> 1.10.0"
   @version "0.1.0"
 
   def project do
@@ -47,10 +47,10 @@ defmodule Talk.MixProject do
       {:dataloader, "~> 1.0"},
       {:phoenix, "~> 1.4.11"},
       {:phoenix_pubsub, "~> 1.1.2"},
-      {:phoenix_ecto, "~> 4.0"},
+      {:phoenix_ecto, "~> 4.1.0"},
       {:guardian, "~> 2.0"},
-      {:ecto_sql, "~> 3.1"},
-      {:postgrex, ">= 0.0.0"},
+      {:ecto_sql, "~> 3.3.3"},
+      {:postgrex, "~> 0.15.0"},
       {:gettext, "~> 0.11"},
       {:corsica, "~> 1.0"},
       {:jason, "~> 1.0"},
@@ -62,7 +62,7 @@ defmodule Talk.MixProject do
       # AWS S3 deps
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
-      {:hackney, "~> 1.15"},
+      {:hackney, github: "benoitc/hackney", override: true},
       {:sweet_xml, "~> 0.6.6"}
       # timber logger
       # {:timber, "~> 3.1"},
@@ -82,7 +82,7 @@ defmodule Talk.MixProject do
   defp aliases do
     [
       "ecto.setup": ["ecto.create", "ecto.migrate"],
-      "ecto.migrate": ["ecto.migrate", "ecto.dump"],
+      "ecto.migrate": ["ecto.migrate"],
       "ecto.reset": ["ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate", "test"]
     ]

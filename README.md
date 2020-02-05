@@ -4,7 +4,7 @@
 
 You'll need to install the following dependencies first:
 
-* [Elixir](https://elixir-lang.org/install.html) 1.9.0
+* [Elixir](https://elixir-lang.org/install.html) 1.10.0
 * [PostgreSQL](https://postgresapp.com/) 11
 
 To start chat server:
