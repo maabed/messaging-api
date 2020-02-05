@@ -12,11 +12,7 @@ defmodule Talk.Medias do
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
   @giphy_html5_url Application.get_env(:talk, :giphy_html5_url)
-  @allowed_format ~w(.jpg .jpeg .gif .png .gif .svg)
-
-  def media_url(%Media{} = media) do
-    AssetStore.file_url(media.filename)
-  end
+  @allowed_format ~w(.jpg .jpeg .png .svg .gif .mp4)
 
   def get_medias(%User{profile: profile} = _user, media_ids) do
     profile
@@ -30,12 +26,12 @@ defmodule Talk.Medias do
       %Media{} = media ->
         {:ok, media}
       _ ->
-        {:error, :not_found}
+        {:error, nil}
     end
   end
 
   def upload_media(%User{profile_id: profile_id} = _user, %Plug.Upload{} = upload, %Message{id: message_id} = _message) do
-    case validate_media(upload.filename) do
+    case validate_format(upload) do
       {true, ext} ->
         binary = get_media_contents(upload)
         ext
@@ -47,7 +43,7 @@ defmodule Talk.Medias do
   end
 
   def upload_media(%User{profile_id: profile_id} = _user, media_id, %Message{id: message_id} = _message) do
-    case validate_media(media_id) do
+    case validate_format(media_id) do
       {true, ext} ->
         store_media(media_id, ext, profile_id, to_string(message_id))
       {false, _} ->
@@ -55,12 +51,25 @@ defmodule Talk.Medias do
     end
   end
 
-  def validate_media(filename) do
+  def validate_format(%Plug.Upload{filename: filename} = _upload) do
     ext =
       filename
       |> Path.extname()
       |> String.downcase()
+    valid = Enum.member?(@allowed_format, ext)
+    {valid, ext}
+  end
 
+  def validate_format(filename) do
+    ext =
+    case String.ends_with?(filename, "html5") do
+      true -> ".mp4"
+      false ->
+        case String.ends_with?(filename, ".gif") do
+          true -> ".gif"
+          false -> nil
+        end
+    end
     valid = Enum.member?(@allowed_format, ext)
     {valid, ext}
   end
@@ -101,6 +110,7 @@ defmodule Talk.Medias do
   defp store_media(_, _, err, _, _), do: err
 
   defp store_media(filename, ext, profile_id, message_id) do
+    filename = if ext == ".gif", do: filename |> String.slice(0..-5), else: filename
     params = %{
       type: "IMAGE",
       filename: filename,
@@ -125,7 +135,6 @@ defmodule Talk.Medias do
   end
 
   def serialize_response(media, url) do
-    Logger.warn("media =>> #{inspect media}")
     media =
       media
       |> Map.delete(:__struct__)

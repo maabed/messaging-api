@@ -16,7 +16,7 @@ defmodule Talk.Schemas.Group do
     field :picture, :string
     field :status, :string, read_after_writes: true
     field :is_private, :boolean, default: true
-    field :last_message_id, :binary_id
+    field :last_message_id, :id
 
     belongs_to :profile, Profile, type: :string
     has_many :group_users, GroupUser

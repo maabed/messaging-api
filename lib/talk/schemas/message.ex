@@ -19,7 +19,7 @@ defmodule Talk.Schemas.Message do
     field :last_activity_at, :utc_datetime, virtual: true
 
     belongs_to :profile, Profile, type: :string
-    has_one :media, Media, foreign_key: :message_id
+    has_many :media, Media, foreign_key: :message_id, references: :id
     has_many :message_groups, MessageGroup
     has_many :recipients, through: [:message_groups, :profile]
     has_many :message_reactions, MessageReaction

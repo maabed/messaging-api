@@ -19,7 +19,7 @@ defmodule Talk.Schemas.Media do
     field :for_object_type, :string, source: :mo_for_object_type, default: "MESSAGE" # table name that this media object is related to.
     field :filename, :string, source: :mo_reference_id
     belongs_to :profile, Profile, type: :string, foreign_key: :created_by, source: :mo_created_by
-    belongs_to :message, Message, foreign_key: :message_id, type: :string, source: :mo_for_object_id
+    belongs_to :message, Message, source: :mo_for_object_id # references: :id
 
     timestamps()
   end

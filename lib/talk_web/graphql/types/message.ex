@@ -7,19 +7,11 @@ defmodule TalkWeb.Type.Message do
   alias Talk.Schemas.Message
   alias Talk.Messages
   alias TalkWeb.Resolver.Messages, as: Resolver
-
+  require Logger
   object :message do
     field :id, non_null(:id)
     field :content, :string
-    field :media, :media do
-      resolve fn message, _, _ ->
-        if message.media do
-          {:ok, message.media}
-        else
-          {:ok, nil}
-        end
-      end
-    end
+    field :media, :media, resolve: &Resolver.message_media/3
     field :status, non_null(:message_status)
     field :groups, list_of(:group), resolve: dataloader(:db)
     field :sender, non_null(:user), resolve: &Resolver.message_sender/3
@@ -51,7 +43,7 @@ defmodule TalkWeb.Type.Message do
 
   object :media do
     field :id, :id
-    field :url, :string
+    field :url, :string, resolve: &Resolver.media_url/3
     field :size, :integer
     field :type, :string
     field :filename, :string

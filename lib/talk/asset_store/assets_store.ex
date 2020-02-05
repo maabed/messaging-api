@@ -3,6 +3,7 @@ defmodule Talk.AssetStore do
   Responsible for taking file (media) uploads and storing them.
   """
   require Logger
+  alias Talk.Schemas.Media
 
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
@@ -29,17 +30,17 @@ defmodule Talk.AssetStore do
     @adapter.avatar_public_url(pathname, @avatar_bucket)
   end
 
+
+  def media_url(%Media{filename: filename, extension: extension} = _media) do
+    filename
+    |> @adapter.public_url(@bucket, extension)
+  end
+
   @doc "Uploads a file."
   @spec persist_file(String.t(), binary(), String.t()) :: {:ok, String.t()} | {:error, any()}
   def persist_file(filename, binary_data, type) do
     build_file_path(filename)
     |> @adapter.persist(@bucket, binary_data, type)
-  end
-
-  @doc "Generates the URL for a file upload."
-  def file_url(filename) do
-    build_file_path(filename)
-    |> @adapter.public_url(@bucket)
   end
 
   defp build_file_path(filename) do

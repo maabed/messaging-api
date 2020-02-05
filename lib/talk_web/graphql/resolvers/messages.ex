@@ -6,6 +6,7 @@ defmodule TalkWeb.Resolver.Messages do
   require Logger
 
   alias Ecto.Changeset
+  alias Talk.AssetStore
   alias Talk.{Groups, Messages, Medias, Users}
   alias Talk.Schemas.{Group, Message, Report, User}
   alias TalkWeb.Resolver.Helpers
@@ -43,6 +44,15 @@ defmodule TalkWeb.Resolver.Messages do
   @spec message_media(Message.t(), map(), info()) :: dataloader_result()
   def message_media(%Message{id: id} = _message, _, _info) do
     Medias.get_media_by_message_id(to_string(id))
+  end
+
+  @spec media_url(map(), map(), info()) :: paginated_result()
+  def media_url(%{filename: filename, extension: extension} = media, _args,  _info) do
+    if is_binary(filename) and is_binary(extension) do
+      {:ok, AssetStore.media_url(media)}
+    else
+      {:ok, nil}
+    end
   end
 
   @spec can_edit_message(Message.t(), map(), info()) :: dataloader_result()
