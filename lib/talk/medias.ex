@@ -11,7 +11,7 @@ defmodule Talk.Medias do
 
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
-  @giphy_html5_url Application.get_env(:talk, :giphy_html5_url)
+  @giphy_url Application.get_env(:talk, :giphy_url)
   @allowed_format ~w(.jpg .jpeg .png .svg .gif .mp4)
 
   def get_medias(%User{profile: profile} = _user, media_ids) do
@@ -62,12 +62,12 @@ defmodule Talk.Medias do
 
   def validate_format(filename) do
     ext =
-    case String.ends_with?(filename, "html5") do
+    case String.ends_with?(filename, ".mp4") do
       true -> ".mp4"
       false ->
         case String.ends_with?(filename, ".gif") do
           true -> ".gif"
-          false -> nil
+          false -> {false, nil}
         end
     end
     valid = Enum.member?(@allowed_format, ext)
@@ -110,7 +110,6 @@ defmodule Talk.Medias do
   defp store_media(_, _, err, _, _), do: err
 
   defp store_media(filename, ext, profile_id, message_id) do
-    filename = if ext == ".gif", do: filename |> String.slice(0..-5), else: filename
     params = %{
       type: "IMAGE",
       filename: filename,
@@ -122,7 +121,7 @@ defmodule Talk.Medias do
     Multi.new()
     |> Multi.insert(:media, Media.create_changeset(%Media{}, params))
     |> Multi.run(:url, fn _, %{media: %Media{filename: filename}} ->
-        {:ok, @giphy_html5_url <> "/" <> filename}
+        {:ok, @giphy_url <> "/" <> filename}
     end)
     |> Repo.transaction()
     |> case do

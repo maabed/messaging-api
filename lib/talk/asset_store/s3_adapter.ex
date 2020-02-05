@@ -3,8 +3,7 @@ defmodule Talk.AssetStore.S3Adapter do
 
   alias ExAws.S3
   @cdn_url if Mix.env() == :dev, do: "https://images-local.sapien.network/", else: "https://images.sapien.network/"
-  @giphy_gif_url Application.get_env(:talk, :giphy_gif_url)
-  @giphy_html5_url Application.get_env(:talk, :giphy_html5_url)
+  @giphy_url Application.get_env(:talk, :giphy_url)
 
   @behaviour Talk.AssetStore.Adapter
   require Logger
@@ -34,10 +33,9 @@ defmodule Talk.AssetStore.S3Adapter do
 
   def public_url(filename, bucket, extension) do
     case extension do
-      ".gif" ->
-        @giphy_gif_url <> "/" <> filename <> "/giphy.gif"
-      ".mp4" ->
-        @giphy_html5_url <> "/" <> filename
+      ext when ext in [".gif", ".mp4"] ->
+        @giphy_url <> "/" <> filename
+
       ext when ext in [".jpg", ".jpeg", ".png", ".svg"] ->
         "https://s3.us-east-1.amazonaws.com/" <> bucket <> "/uploads/" <> filename
     end

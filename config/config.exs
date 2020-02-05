@@ -9,8 +9,7 @@ config :talk,
   jwt_aud: audience,
   user_agent_req: false,
   allowed_origins: origins,
-  giphy_gif_url: "https://media.giphy.com/media",
-  giphy_html5_url: "https://giphy.com/gifs"
+  giphy_url: "https://media.giphy.com/media"
 
 config :talk, Talk.Repo,
   adapter: Ecto.Adapters.Postgres,
