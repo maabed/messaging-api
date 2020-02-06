@@ -178,7 +178,7 @@ defmodule TalkWeb.Type.Message do
 
     field :create_report, :report_mutation_response do
       arg :type, :string
-      arg :reason, non_null(:id)
+      arg :reason, non_null(:string)
       arg :message_id, non_null(:id)
       arg :author_id, non_null(:id)
       resolve &Resolver.create_report/2

@@ -49,7 +49,7 @@ defmodule TalkWeb.Type.Subscriptions do
   end
 
   object :group_created_response do
-    field :group, :group
+    field :group, non_null(:group)
   end
 
   object :message_created_response do
