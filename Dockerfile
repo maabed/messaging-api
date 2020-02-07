@@ -1,5 +1,5 @@
 # Step 1 - Build the OTP binary
-FROM elixir:1.9.4-alpine AS build
+FROM elixir:1.10.0-alpine AS build
 
 RUN apk update && \
     apk upgrade && \
