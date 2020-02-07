@@ -21,10 +21,6 @@ jobs:
             echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:latest"' >> $BASH_ENV
             echo 'export PORT_VALUE="${PORT}"' >> $BASH_ENV
             echo 'export HOST_VALUE="${HOST}"' >> $BASH_ENV
-            echo 'export POSTGRES_HOST_VALUE="${POSTGRES_HOST}"' >> $BASH_ENV
-            echo 'export POSTGRES_DATABASE_VALUE="${POSTGRES_DATABASE}"' >> $BASH_ENV
-            echo 'export POSTGRES_USER_VALUE="${POSTGRES_USER}"' >> $BASH_ENV
-            echo 'export POSTGRES_PASSWORD_VALUE="${POSTGRES_PASSWORD}"' >> $BASH_ENV
             echo 'export POOL_SIZE_VALUE="${POOL_SIZE}"' >> $BASH_ENV
             echo 'export DATABASE_URL_VALUE="${DATABASE_URL}"' >> $BASH_ENV
             echo 'export SECRET_KEY_BASE_VALUE="${SECRET_KEY_BASE}"' >> $BASH_ENV
