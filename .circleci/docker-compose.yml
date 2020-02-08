@@ -1,8 +1,8 @@
 version: '3.7'
 services:
-  talk:
+  chat:
     image: $FULL_IMAGE_NAME
-    container_name: local-talk
+    container_name: local-chat
     ports:
       - "$PORT_VALUE:$PORT_VALUE"
     environment:
@@ -11,9 +11,9 @@ services:
       - POOL_SIZE=18
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=sapien
       - POSTGRES_HOSTNAME=db
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/sapien
       - SECRET_KEY_BASE=$SECRET_KEY_BASE_VALUE
       - ASSET_STORE_BUCKET=$ASSET_STORE_BUCKET_VALUE
       - ASSET_AVATAR_DIR=$ASSET_AVATAR_DIR_VALUE
@@ -32,11 +32,17 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=sapien
       - POSTGRES_HOSTNAME=db
+    volumes:
+      - ./priv/docker/init_sapien_db.sql:/docker-entrypoint-initdb.d/init_sapien_db.sql
+      - ./pgdata:/var/lib/postgresql/data
     networks:
       sapien-local:
         ipv4_address: 172.24.0.6
+volumes:
+  pgdata: {}
+
 networks:
   sapien-local:
     driver: bridge
