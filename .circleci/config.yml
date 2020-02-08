@@ -29,20 +29,20 @@ jobs:
             echo 'export AWS_ACCESS_KEY_ID_VALUE="${AWS_ACCESS_KEY_ID}"' >> $BASH_ENV
             echo 'export AWS_SECRET_ACCESS_KEY_VALUE="${AWS_SECRET_ACCESS_KEY}"' >> $BASH_ENV
       - run:
-          name: Build talk Docker image
+          name: Build Chat Docker image
           command: |
             docker build -t $FULL_IMAGE_NAME .
       - run:
-          name: Test talk image
+          name: Test Chat image
           command: |
             docker-compose -f .circleci/docker-compose.yml up -d
             sleep 10
             docker ps
-            LOCAL_TALK_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-talk)
-            docker logs local-talk
-            docker run --network container:local-talk appropriate/curl -sSLI --retry 10 --retry-connrefused http://$LOCAL_TALK_IP:$PORT_VALUE/api/health
+            LOCAL_CHAT_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-chat)
+            docker logs local-chat
+            docker run --network container:local-chat appropriate/curl -sSLI --retry 10 --retry-connrefused http://$LOCAL_CHAT_IP:$PORT_VALUE/api/health
       - run:
-          name: Save talk image to an archive
+          name: Save Chat image to an archive
           command: |
             mkdir docker-image
             docker save -o docker-image/image.tar $FULL_IMAGE_NAME
@@ -103,7 +103,7 @@ jobs:
               aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag PRD --image-manifest "$MANIFEST"
             fi
       - run:
-          name: Update the talk ECS Service with the latest Task Definition and Docker image
+          name: Update the Chat ECS Service with the latest Task Definition and Docker image
           command: |
             . venv/bin/activate
             export ECS_TASK_FAMILY_NAME="${AWS_RESOURCE_NAME_PREFIX}-${AWS_ENVIRONMENT}-fargate-td"
@@ -120,11 +120,11 @@ jobs:
             aws ecs wait services-stable --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME
             curl -sSLIk https://$ELB_DNS_NAME/api/health | grep " 200"
             if [ "${CIRCLE_BRANCH}" == "development" ]; then
-              curl -sSLIk https://sapien-talk-stg.sapien.network/api/health | grep " 200"
+              curl -sSLIk https://sapien-chat-stg.sapien.network/api/health | grep " 200"
             elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
-              curl -sSLIk https://sapien-talk-stg.sapien.network/api/health | grep " 200"
+              curl -sSLIk https://sapien-chat-stg.sapien.network/api/health | grep " 200"
             elif [ "${CIRCLE_BRANCH}" == "master" ]; then
-              curl -sSLIk https://sapien-talk.sapien.network/api/health | grep " 200"
+              curl -sSLIk https://sapien-chat.sapien.network/api/health | grep " 200"
             fi
 workflows:
   version: 2
