@@ -9,11 +9,11 @@ services:
       - PORT=$PORT_VALUE
       - HOST=$HOST_VALUE
       - POOL_SIZE=18
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=sapien
+      - POSTGRES_PASSWORD=sapien
       - POSTGRES_DB=sapien
       - POSTGRES_HOSTNAME=db
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/sapien
+      - DATABASE_URL=postgres://sapien:sapien@db:5432/sapien
       - SECRET_KEY_BASE=$SECRET_KEY_BASE_VALUE
       - ASSET_STORE_BUCKET=$ASSET_STORE_BUCKET_VALUE
       - ASSET_AVATAR_DIR=$ASSET_AVATAR_DIR_VALUE
@@ -30,8 +30,8 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=sapien
+      - POSTGRES_PASSWORD=sapien
       - POSTGRES_DB=sapien
       - POSTGRES_HOSTNAME=db
     volumes:
