@@ -27,14 +27,5 @@ GraphiQL playground at [`localhost:7000/graphiql`](http://localhost:7000/graphiq
 * ssh into app container `docker exec -it local-talk bash`
 * ssh into db container `docker exec -it local-db bash`
 
-
-## Guardian setup
-* To generate keys for Guardian, open an iex session in the terminal with: `iex -S mix phx.server`
-* Locaate the private pem file which generated previously for BE
-* Run `"path_for_pem_file" |> JOSE.JWK.from_pem_file() |> JOSE.JWK.to_map |> elem(1)`
-* Copy the hashes for "d" "dp", "dq", "n", "p", "q" and "qi" and add system GUARDIAN_XX envvar for each
- ex: GUARDIAN_D for "d", GUARDIAN_DP for "dp" ...etc.
-
-
 ## Generat JWT tokon
 If you want to generate JWT token for a user use `mix talk.get_auth_token --username <username>`. Its  also accepts `--id <id>` and `--email <email>` params.
