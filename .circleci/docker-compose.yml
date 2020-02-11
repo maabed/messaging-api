@@ -30,8 +30,8 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_USER=sapien
-      - POSTGRES_PASSWORD=sapien
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=sapien
       - POSTGRES_HOSTNAME=db
     volumes:
