@@ -35,7 +35,7 @@ services:
       - POSTGRES_DB=sapien
       - POSTGRES_HOSTNAME=db
     volumes:
-      - ./priv/docker/init_sapien_db.sql:/docker-entrypoint-initdb.d/init_sapien_db.sql
+      - ./priv/docker/:/docker-entrypoint-initdb.d/
     networks:
       sapien-local:
         ipv4_address: 172.24.0.6
