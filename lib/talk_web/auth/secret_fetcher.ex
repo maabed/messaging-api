@@ -5,29 +5,22 @@ defmodule TalkWeb.Auth.SecretFetcher do
 
   def fetch_signing_secret(_module, _opts) do
     secret =
-      %{
-        "d" => System.get_env("GUARDIAN_D"),
-        "dp" => System.get_env("GUARDIAN_DP"),
-        "dq" => System.get_env("GUARDIAN_DQ"),
-        "e" => "AQAB",
-        "kty" => "RSA",
-        "n" => System.get_env("GUARDIAN_N"),
-        "p" => System.get_env("GUARDIAN_P"),
-        "q" => System.get_env("GUARDIAN_Q"),
-        "qi" => System.get_env("GUARDIAN_QI")
-      }
+      fetch()
+      |> JOSE.JWK.to_map
+      |> elem(1)
 
     {:ok, secret}
   end
 
   def fetch_verifying_secret(_module, _headers, _opts) do
-    secret =
-      %{
-        "e" => "AQAB",
-        "kty" => "RSA",
-        "n" => System.get_env("GUARDIAN_N")
-      }
+    secret = fetch() |> JOSE.JWK.to_public()
 
     {:ok, secret}
+  end
+
+  defp fetch() do
+    System.get_env("JWT_PRIVATE_KEY")
+    |> Base.decode64!()
+    |> JOSE.JWK.from_pem()
   end
 end
