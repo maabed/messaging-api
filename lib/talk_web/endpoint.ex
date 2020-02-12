@@ -37,6 +37,7 @@ defmodule TalkWeb.Endpoint do
     origins: ["http://localhost:3000", "http://localhost:7000", ~r{^https?://(.*\.?)sapien\.network$}],
     allow_headers: :all,
     allow_methods: ["HEAD", "GET"],
+    allow_credentials: true,
     log: [rejected: :error, invalid: :warn],
     max_age: 3600
 
