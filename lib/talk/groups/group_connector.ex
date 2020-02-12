@@ -14,8 +14,8 @@ defmodule Talk.Groups.Connector do
             status: :open,
             term: :nil,
             order_by: %{
-              field: :name,
-              direction: :asc
+              field: :recent_message,
+              direction: :desc
             }
 
   @type t :: %__MODULE__{
@@ -26,7 +26,7 @@ defmodule Talk.Groups.Connector do
           status: :open | :closed | :deleted | :all,
           term: String.t() | nil,
           order_by: %{
-            field: :name | :inserted_at,
+            field: :name | :inserted_at | :recent_message,
             direction: :asc | :desc
           }
         }
@@ -34,6 +34,7 @@ defmodule Talk.Groups.Connector do
   def get(args, %{context: %{user: user}}) do
     user
     |> Groups.Query.base_query()
+    |> apply_order_fields(args)
     |> apply_search_filter(args)
     |> apply_status_filter(args)
     |> Pagination.fetch_result(Args.build(args))
@@ -60,4 +61,10 @@ defmodule Talk.Groups.Connector do
   end
 
   defp apply_status_filter(query, _), do: query
+
+  defp apply_order_fields(query, %{order_by: %{field: :recent_message}}) do
+    Groups.Query.select_recent_messages(query)
+  end
+
+  defp apply_order_fields(query, _), do: query
 end

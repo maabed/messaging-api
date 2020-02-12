@@ -17,6 +17,7 @@ defmodule Talk.Schemas.Group do
     field :status, :string, read_after_writes: true
     field :is_private, :boolean, default: true
     field :last_message_id, :id
+    field :recent_message, :utc_datetime, virtual: true
 
     belongs_to :profile, Profile, type: :string
     has_many :group_users, GroupUser

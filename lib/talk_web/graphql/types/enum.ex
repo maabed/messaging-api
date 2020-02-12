@@ -85,6 +85,7 @@ defmodule TalkWeb.Type.Enum do
   enum :group_order_field do
     value :name
     value :inserted_at
+    value :recent_message
   end
 
   enum :message_order_field do

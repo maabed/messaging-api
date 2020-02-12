@@ -20,7 +20,7 @@ GraphiQL playground at [`localhost:7000/graphiql`](http://localhost:7000/graphiq
 ## Docker setup
 * copy .env contents to new .env_dovker file and remove `export` from ech environment variable
 * create `pgdata` and `build` directory to store docker volumes 
-* build image `--tag local-talk:latest -t sapien-talk . `
+* build the image `docker build --tag local-talk:latest -t sapien-talk . `
 * start `docker-compose --env-file .env_docker up`
 * stop `docker-compose --env-file .env_docker down`
 * rebuild using compose `docker-compose --env-file .env_docker up --build --force-recreate --renew-anon-volumes`

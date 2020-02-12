@@ -3,7 +3,7 @@ defmodule Talk.Groups.Query do
 
   import Ecto.Query, warn: false
   require Logger
-  alias Talk.Schemas.{Group, GroupUser, Profile, User}
+  alias Talk.Schemas.{Group, GroupUser, MessageGroup, Profile, User}
 
   @spec base_query(User.t()) :: Ecto.Query.t()
   def base_query(%User{profile_id: profile_id}) do
@@ -54,11 +54,20 @@ defmodule Talk.Groups.Query do
     #     select: gu.profile_id
   end
 
+  @spec select_recent_messages(Ecto.Query.t()) :: Ecto.Query.t()
+  def select_recent_messages(query) do
+    from [g, _p, gu] in query,
+      left_join: mg in MessageGroup,
+      on: mg.group_id == g.id,
+      group_by: g.id,
+      select_merge: %{recent_message: max(mg.inserted_at)}
+  end
+
   @spec search(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
   def search(query, term) do
     term = "%" <> term <> "%"
 
-    from [g, u, gu] in query,
+    from [g, _p, gu] in query,
       join: gu2 in GroupUser,
       on: gu.id != gu2.id and gu.group_id == gu2.group_id,
       join: p2 in assoc(gu2, :profile),
