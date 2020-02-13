@@ -42,18 +42,18 @@ defmodule TalkWeb.Auth do
   end
 
   # Guardian hooks
-  def on_verify(claims, _token, _options) do
+  # def on_verify(claims, _token, _options) do
     # TODO: move audience check to TalkWeb.Plug.VerifyAudience
     # case claims do
     #   %{"aud" => @aud} -> {:ok, claims}
     #   _ -> {:error, :invalid_audience}
     # end
 
-    case claims do
-      %{"iss" => "sapien"} -> {:ok, claims}
-      _ -> {:error, :invalid_issuer}
-    end
-  end
+    # case claims do
+    #   %{"iss" => "sapien"} -> {:ok, claims}
+    #   _ -> {:error, :invalid_issuer}
+    # end
+  # end
 
   # def build_claims(claims, _resource, _opts) do
   #   claims_with_aud =
