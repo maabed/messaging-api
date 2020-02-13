@@ -6,7 +6,7 @@ defmodule TalkWeb.Auth do
   alias Talk.Users
   alias Talk.Schemas.User
 
-  @aud Application.get_env(:talk, :jwt_aud)
+  # @aud Application.get_env(:talk, :jwt_aud)
 
   def current_user(conn) do
     TalkWeb.Auth.Plug.current_resource(conn)
@@ -43,10 +43,11 @@ defmodule TalkWeb.Auth do
 
   # Guardian hooks
   def on_verify(claims, _token, _options) do
-    case claims do
-      %{"aud" => @aud} -> {:ok, claims}
-      _ -> {:error, :invalid_audience}
-    end
+    # TODO: move audience check to TalkWeb.Plug.VerifyAudience
+    # case claims do
+    #   %{"aud" => @aud} -> {:ok, claims}
+    #   _ -> {:error, :invalid_audience}
+    # end
 
     case claims do
       %{"iss" => "sapien"} -> {:ok, claims}
@@ -54,11 +55,10 @@ defmodule TalkWeb.Auth do
     end
   end
 
-  def build_claims(claims, _resource, _opts) do
-    claims_with_aud =
-    claims
-    |> Map.put("aud", @aud)
-
-    {:ok, claims_with_aud}
-  end
+  # def build_claims(claims, _resource, _opts) do
+  #   claims_with_aud =
+  #   claims
+  #   |> Map.put("aud", @aud)
+  #   {:ok, claims_with_aud}
+  # end
 end
