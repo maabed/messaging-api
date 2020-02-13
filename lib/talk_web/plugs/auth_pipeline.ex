@@ -15,9 +15,11 @@ defmodule TalkWeb.Plug.AuthPipeline do
   plug TalkWeb.Plug.Graphql
   plug TalkWeb.Plug.ConnInterceptor # good for debugging
 
-  def auth_error(conn, {type, reason}, _opts) do
-    Logger.warn("AuthPipeline auth_error [type]==> #{inspect type}")
-    Logger.warn("AuthPipeline auth_error [reason]==> #{inspect reason}")
+  def auth_error(conn, {type, reason}, opts) do
+    Logger.warn("Auth Error [type] #{inspect type}")
+    Logger.warn("Auth Error [reason] #{inspect reason}")
+    Logger.warn("Auth Error [opts] #{inspect opts}")
+    Logger.warn("Interceptor [Headers]: #{inspect conn.req_headers}")
     body = Jason.encode!(%{message: to_string(type)})
     send_resp(conn, 401, body)
   end

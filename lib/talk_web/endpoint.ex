@@ -6,7 +6,7 @@ defmodule TalkWeb.Endpoint do
 
   socket "/socket", TalkWeb.UserSocket,
     websocket: [
-      timeout: 45_000,
+      timeout: 100_000,
       check_origin: @origins
     ]
 

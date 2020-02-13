@@ -5,6 +5,7 @@ defmodule TalkWeb.Auth do
 
   alias Talk.Users
   alias Talk.Schemas.User
+  require Logger
 
   # @aud Application.get_env(:talk, :jwt_aud)
 
@@ -41,6 +42,26 @@ defmodule TalkWeb.Auth do
     end
   end
 
+  def debug_token(token) do
+    Logger.warn("debug_token [token] ==> #{inspect token}")
+    jwk_decode = System.get_env("JWT_PRIVATE_KEY") |> Base.decode64!() |> JOSE.JWK.from_pem() |> JOSE.JWK.to_map
+    jwk_url_decode = System.get_env("JWT_PRIVATE_KEY") |> Base.url_decode64!(padding: false) |> JOSE.JWK.from_pem() |> JOSE.JWK.to_map()
+    {verified, _, _} = JOSE.JWT.verify_strict(jwk_decode, ["RS256"], token)
+    {url_verified, _, _} = JOSE.JWT.verify_strict(jwk_url_decode, ["RS256"], token)
+    Logger.warn "debug_token JOSE verified ==> #{inspect verified}"
+    Logger.warn "debug_token JOSE url_verified ==> #{inspect url_verified}"
+
+    with {:ok, claims} <- TalkWeb.Auth.decode_and_verify(token) do
+      Logger.debug("debug_token [claims] #{inspect claims}")
+    else
+      {:error, reason} ->
+          Logger.debug("debug_token [ERROR] #{inspect reason}")
+        {:error, reason}
+      err ->
+        Logger.debug("debug_token [other ERR] #{inspect err}")
+        {:error, :unauthorized}
+    end
+  end
   # Guardian hooks
   # def on_verify(claims, _token, _options) do
     # TODO: move audience check to TalkWeb.Plug.VerifyAudience
