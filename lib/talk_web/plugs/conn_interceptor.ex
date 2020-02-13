@@ -4,7 +4,7 @@ defmodule TalkWeb.Plug.ConnInterceptor do
   def init(default), do: default
 
   def call(conn, _default) do
-    Logger.warn("headers: #{inspect conn.req_headers}")
+    Logger.warn("Interceptor [Headers]: #{inspect conn.req_headers}")
     conn
   end
 end

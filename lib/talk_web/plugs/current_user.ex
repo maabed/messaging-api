@@ -2,7 +2,7 @@ defmodule TalkWeb.Plug.CurrentUser do
   @moduledoc "Plug to insert current user to Plug.Conn struct for graphql endpoint"
 
   import Plug.Conn, only: [assign: 3]
-
+  require Logger
   def init(default), do: default
 
   def call(conn, _default) do
@@ -13,6 +13,7 @@ defmodule TalkWeb.Plug.CurrentUser do
         conn
 
       err ->
+        Logger.warn("CurrentUser plug [err]: #{inspect err}")
         err
     end
   end

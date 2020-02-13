@@ -1,6 +1,6 @@
 import Config
 
-origins = ["//localhost:3000", "//localhost:7000", "//*.sapien.network"]
+origins = ["//localhost:3000", "//localhost:7000", "//*.sapien.network", "https://*.sapien.network"]
 audience = ["sapien.network", "beta.sapien.network", "talk.sapien.network", "notifier.sapien.network"]
 
 config :talk,

@@ -7,6 +7,7 @@ defmodule TalkWeb.UserSocket do
   alias TalkWeb.Auth
   alias TalkWeb.Plug.Graphql
   alias Absinthe.Phoenix.Socket
+  require Logger
 
   ## Channels
   channel "messages:*", TalkWeb.MessageChannel
@@ -21,7 +22,9 @@ defmodule TalkWeb.UserSocket do
 
       {:ok, socket_with_opts}
     else
-      _ -> :error
+      err ->
+        Logger.warn("UserSocket connect Error ==> #{inspect err}")
+        :error
     end
   end
 
@@ -30,7 +33,9 @@ defmodule TalkWeb.UserSocket do
   defp authorize(token) do
     case Auth.resource_from_token(token) do
       {:ok, {:ok, user}, _claims} -> {:ok, user}
-      _ -> :unauthorized
+      err ->
+        Logger.warn("UserSocket authorize Error ==> #{inspect err}")
+        :unauthorized
     end
   end
 

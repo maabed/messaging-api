@@ -2,7 +2,7 @@ defmodule TalkWeb.Plug.AuthPipeline do
   @moduledoc "Module to define guardian related plugs into a pipeline"
 
   import Plug.Conn, only: [send_resp: 3]
-
+  require Logger
   use Guardian.Plug.Pipeline,
     otp_app: :talk,
     module: TalkWeb.Auth,
@@ -13,9 +13,11 @@ defmodule TalkWeb.Plug.AuthPipeline do
   plug Guardian.Plug.LoadResource, allow_blank: true
   plug TalkWeb.Plug.CurrentUser
   plug TalkWeb.Plug.Graphql
-  # plug TalkWeb.Plug.ConnInterceptor # good for debugging
+  plug TalkWeb.Plug.ConnInterceptor # good for debugging
 
-  def auth_error(conn, {type, _reason}, _opts) do
+  def auth_error(conn, {type, reason}, _opts) do
+    Logger.warn("AuthPipeline auth_error [type]==> #{inspect type}")
+    Logger.warn("AuthPipeline auth_error [reason]==> #{inspect reason}")
     body = Jason.encode!(%{message: to_string(type)})
     send_resp(conn, 401, body)
   end
