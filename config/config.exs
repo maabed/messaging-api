@@ -9,7 +9,8 @@ config :talk,
   jwt_aud: audience,
   user_agent_req: false,
   allowed_origins: origins,
-  giphy_url: "https://media.giphy.com/media"
+  giphy_url: "https://media.giphy.com/media",
+  priv_key: System.get_env("JWT_PRIVATE_KEY")
 
 config :talk, Talk.Repo,
   adapter: Ecto.Adapters.Postgres,

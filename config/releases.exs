@@ -1,6 +1,7 @@
 import Config
 
 config :talk,
+  priv_key: System.fetch_env!("JWT_PRIVATE_KEY"),
   SECRET_KEY_BASE: System.fetch_env!("SECRET_KEY_BASE"),
   asset_store: [
     bucket: System.fetch_env!("ASSET_STORE_BUCKET"),

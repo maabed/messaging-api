@@ -59,8 +59,8 @@ defmodule TalkWeb.Router do
       }
 
       Logger.warn("error kind ==> #{inspect kind}")
-      Logger.warn("error reason ==> #{inspect reason}")
-      Logger.warn("error report data ==> #{inspect data}")
+      Logger.warn("error reason ==> #{inspect reason, pretty: true}")
+      Logger.warn("error report data ==> #{inspect data, pretty: true}")
       data
     end
   end

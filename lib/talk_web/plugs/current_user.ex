@@ -13,7 +13,7 @@ defmodule TalkWeb.Plug.CurrentUser do
         conn
 
       err ->
-        Logger.warn("CurrentUser plug [err]: #{inspect err}")
+        Logger.error("CurrentUser plug [err]: #{inspect err, pretty: true}")
         err
     end
   end

@@ -52,13 +52,13 @@ defmodule TalkWeb.Auth do
     Logger.warn "debug_token JOSE url_verified ==> #{inspect url_verified}"
 
     with {:ok, claims} <- TalkWeb.Auth.decode_and_verify(token) do
-      Logger.debug("debug_token [claims] #{inspect claims}")
+      Logger.debug("debug_token [claims] #{inspect claims, pretty: true}")
     else
       {:error, reason} ->
-          Logger.debug("debug_token [ERROR] #{inspect reason}")
+          Logger.debug("debug_token [ERROR] #{inspect reason, pretty: true}")
         {:error, reason}
       err ->
-        Logger.debug("debug_token [other ERR] #{inspect err}")
+        Logger.debug("debug_token [other ERR] #{inspect err, pretty: true}")
         {:error, :unauthorized}
     end
   end

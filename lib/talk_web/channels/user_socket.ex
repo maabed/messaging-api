@@ -13,7 +13,7 @@ defmodule TalkWeb.UserSocket do
   channel "messages:*", TalkWeb.MessageChannel
 
   def connect(params, socket) do
-    Logger.warn("UserSocket Connect [params] ==> #{inspect params}")
+    Logger.warn("UserSocket Connect [params] ==> #{inspect params, pretty: true}")
     Logger.warn("UserSocket Connect [authorization] ==> #{inspect Map.get(params, "authorization")}")
     with "Bearer " <> token <- Map.get(params, "authorization"),
         {:ok, user} <- authorize(token) do
@@ -25,7 +25,7 @@ defmodule TalkWeb.UserSocket do
       {:ok, socket_with_opts}
     else
       err ->
-        Logger.warn("UserSocket connect Error ==> #{inspect err}")
+        Logger.error("UserSocket connect Error ==> #{inspect err, pretty: true}")
         :error
       nil ->
         {:error, "Unauthorized"}
@@ -39,7 +39,7 @@ defmodule TalkWeb.UserSocket do
     case Auth.resource_from_token(token) do
       {:ok, {:ok, user}, _claims} -> {:ok, user}
       err ->
-        Logger.warn("UserSocket authorize Error ==> #{inspect err}")
+        Logger.error("UserSocket authorize Error ==> #{inspect err, pretty: true}")
         :unauthorized
     end
   end
