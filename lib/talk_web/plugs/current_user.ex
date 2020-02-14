@@ -12,9 +12,7 @@ defmodule TalkWeb.Plug.CurrentUser do
       {:error, :not_found} ->
         conn
 
-      err ->
-        Logger.error("CurrentUser plug [err]: #{inspect err, pretty: true}")
-        err
+      err -> err
     end
   end
 end

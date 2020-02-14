@@ -24,18 +24,14 @@ defmodule TalkWeb.Auth.SecretFetcher do
   defp fetch() do
     case System.get_env("JWT_PRIVATE_KEY") do
       nil ->
-        Logger.error("[JWT_PRIVATE_KEY] is not set in config!")
-        raise ArgumentError, message: "private key not set in config!"
+        raise ArgumentError, "private key not set in config!"
       key ->
-        Logger.warn("fetch [key] ==> #{inspect key}")
         case Base.url_decode64!(key, padding: false) do
           value when is_binary(value) ->
-            Logger.warn("fetch [value] ==> #{inspect value}")
-            Logger.warn("fetch [value_to_pem] ==> #{inspect JOSE.JWK.from_pem(value) |> JOSE.JWK.to_map, pretty: true}")
             JOSE.JWK.from_pem(value)
           :error ->
             Logger.error("invalid private key format! [JWT_PRIVATE_KEY]")
-            raise ArgumentError, message: "invalid private key format!"
+            raise ArgumentError, "invalid private key format!"
         end
     end
   end

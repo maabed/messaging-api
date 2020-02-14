@@ -36,7 +36,7 @@ config :talk, TalkWeb.Auth,
 
 config :talk, :asset_store,
   bucket: System.get_env("ASSET_STORE_BUCKET"),
-  avatar_bucket: System.get_env("ASSET_AVATAR_DIR"),
+  avatar_dir: System.get_env("ASSET_AVATAR_DIR"),
   adapter: Talk.AssetStore.S3Adapter
 
 config :ex_aws,

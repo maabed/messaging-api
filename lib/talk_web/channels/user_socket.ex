@@ -13,8 +13,6 @@ defmodule TalkWeb.UserSocket do
   channel "messages:*", TalkWeb.MessageChannel
 
   def connect(params, socket) do
-    Logger.warn("UserSocket Connect [params] ==> #{inspect params, pretty: true}")
-    Logger.warn("UserSocket Connect [authorization] ==> #{inspect Map.get(params, "authorization")}")
     with "Bearer " <> token <- Map.get(params, "authorization"),
         {:ok, user} <- authorize(token) do
       socket_with_opts =
