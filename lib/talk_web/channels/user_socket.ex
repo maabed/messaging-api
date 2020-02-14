@@ -35,7 +35,7 @@ defmodule TalkWeb.UserSocket do
   end
 
   defp authorize(token) do
-    Auth.debug_token(token)
+    # Auth.debug_token(token)
     case Auth.resource_from_token(token) do
       {:ok, {:ok, user}, _claims} -> {:ok, user}
       err ->
