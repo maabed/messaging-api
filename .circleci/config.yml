@@ -31,16 +31,6 @@ jobs:
           command: |
             docker build -t $FULL_IMAGE_NAME .
       - run:
-          name: Test Chat image
-          command: |
-            docker-compose -f .circleci/docker-compose.yml up -d
-            sleep 10
-            docker ps
-            LOCAL_CHAT_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-chat)
-            docker logs local-db
-            docker logs local-chat
-            docker run --network container:local-chat appropriate/curl -sSLI --retry 10 --retry-connrefused http://$LOCAL_CHAT_IP:$PORT_VALUE/api/health
-      - run:
           name: Save Chat image to an archive
           command: |
             mkdir docker-image
