@@ -7,7 +7,7 @@ defmodule Talk.AssetStore do
 
   @adapter Application.get_env(:talk, :asset_store)[:adapter]
   @bucket Application.get_env(:talk, :asset_store)[:bucket]
-  @avatar_bucket Application.get_env(:talk, :asset_store)[:avatar_bucket]
+  @avatar_dir Application.get_env(:talk, :asset_store)[:avatar_dir]
   @alphabet Enum.to_list(?a..?z) ++ Enum.to_list(?0..?9)
 
   @doc "Uploads an avatar with a randomly-generated file name."
@@ -27,9 +27,10 @@ defmodule Talk.AssetStore do
   @doc "Generates the URL for a given avatar filename."
   @spec avatar_url(String.t()) :: String.t()
   def avatar_url(pathname) do
-    @adapter.avatar_public_url(pathname, @avatar_bucket)
+    Logger.warn("avatar_url [pathname] #{inspect pathname}")
+    Logger.warn("avatar_url [@avatar_dir] #{inspect @avatar_dir}")
+    @adapter.avatar_public_url(pathname, @avatar_dir)
   end
-
 
   def media_url(%Media{filename: filename, extension: extension} = _media) do
     filename

@@ -43,6 +43,9 @@ defmodule Talk.AssetStore.S3Adapter do
   end
 
   def avatar_public_url(pathname, bucket) do
+    Logger.warn("S3Adapter [@cdn_url] #{inspect @cdn_url}")
+    Logger.warn("avatar_public_url pathname #{inspect pathname}")
+    Logger.warn("avatar_public_url bucket #{inspect bucket}")
     @cdn_url <> bucket <> "/" <> pathname
   end
 end
