@@ -54,25 +54,19 @@ defmodule TalkWeb.Resolver.Users do
   end
 
   @spec avatar_url(User.t(), map(), info()) :: paginated_result()
-  def avatar_url(%User{avatar: avatar} = user, _args, _info) do
-    Logger.warn("avatar 1111 [user] #{inspect user, pretty: true}")
+  def avatar_url(%User{avatar: avatar} = _user, _args, _info) do
     if avatar do
-      Logger.warn("avatar 1111 #{inspect avatar}")
       {:ok, AssetStore.avatar_url(avatar)}
     else
-      Logger.warn("avatar 1111 nil")
       {:ok, nil}
     end
   end
 
   @spec avatar_url(map(), map(), info()) :: paginated_result()
-  def avatar_url(%{avatar: avatar} = profile, _args,  _info) do
-    Logger.warn("avatar 2222 [profile] #{inspect profile, pretty: true}")
+  def avatar_url(%{avatar: avatar} = _profile, _args,  _info) do
     if avatar do
-      Logger.warn("avatar 2222 #{inspect avatar}")
       {:ok, AssetStore.avatar_url(avatar)}
     else
-      Logger.warn("avatar 2222 nil")
       {:ok, nil}
     end
   end
