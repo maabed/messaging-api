@@ -9,6 +9,8 @@ config :talk,
   jwt_aud: audience,
   user_agent_req: false,
   allowed_origins: origins,
+  avatar_dir: "thumbnails",
+  avatar_dir1: System.get_env("ASSET_AVATAR_DIR"),
   giphy_url: "https://media.giphy.com/media",
   priv_key: System.get_env("JWT_PRIVATE_KEY")
 

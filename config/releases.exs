@@ -1,6 +1,8 @@
 import Config
 
 config :talk,
+  avatar_dir: "thumbnails",
+  avatar_dir1: System.fetch_env!("ASSET_AVATAR_DIR"),
   priv_key: System.fetch_env!("JWT_PRIVATE_KEY"),
   SECRET_KEY_BASE: System.fetch_env!("SECRET_KEY_BASE")
 
