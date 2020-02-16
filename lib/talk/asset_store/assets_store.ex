@@ -4,9 +4,9 @@ defmodule Talk.AssetStore do
   """
   require Logger
   alias Talk.Schemas.Media
+  alias Talk.AssetStore.S3Adapter
 
-  @adapter Application.get_env(:talk, :asset_store)[:adapter]
-  @bucket Application.get_env(:talk, :asset_store)[:bucket]
+  @bucket Application.get_env(:talk, :bucket)
   @alphabet Enum.to_list(?a..?z) ++ Enum.to_list(?0..?9)
 
   @doc "Uploads an avatar with a randomly-generated file name."
@@ -16,7 +16,7 @@ defmodule Talk.AssetStore do
       {:ok, binary_data} ->
         binary_data
         |> build_avatar_path()
-        |> @adapter.persist(@bucket, binary_data, nil)
+        |> S3Adapter.persist(@bucket, binary_data, nil)
 
       :error ->
         :error
@@ -26,19 +26,19 @@ defmodule Talk.AssetStore do
   @doc "Generates the URL for a given avatar filename."
   @spec avatar_url(String.t()) :: String.t()
   def avatar_url(pathname) do
-    @adapter.avatar_public_url(pathname)
+    S3Adapter.avatar_public_url(pathname)
   end
 
   def media_url(%Media{filename: filename, extension: extension} = _media) do
     filename
-    |> @adapter.public_url(@bucket, extension)
+    |> S3Adapter.public_url(@bucket, extension)
   end
 
   @doc "Uploads a file."
   @spec persist_file(String.t(), binary(), String.t()) :: {:ok, String.t()} | {:error, any()}
   def persist_file(filename, binary_data, type) do
     build_file_path(filename)
-    |> @adapter.persist(@bucket, binary_data, type)
+    |> S3Adapter.persist(@bucket, binary_data, type)
   end
 
   defp build_file_path(filename) do

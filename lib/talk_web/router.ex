@@ -77,7 +77,7 @@ defmodule TalkWeb.Router do
     end
   end
 
-  @filter_headers ~w(authorization)
+  @filter_headers ~w(authorization cookie csrf-token)
 
   defp filter_headers(headers) do
     Map.drop(headers, @filter_headers)

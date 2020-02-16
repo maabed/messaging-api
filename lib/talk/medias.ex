@@ -7,10 +7,10 @@ defmodule Talk.Medias do
   alias Talk.AssetStore
   alias Talk.Repo
   alias Talk.Schemas.{Media, Message, User}
+  alias Talk.AssetStore.S3Adapter
   require Logger
 
-  @adapter Application.get_env(:talk, :asset_store)[:adapter]
-  @bucket Application.get_env(:talk, :asset_store)[:bucket]
+  @bucket Application.get_env(:talk, :bucket)
   @giphy_url Application.get_env(:talk, :giphy_url)
   @allowed_format ~w(.jpg .jpeg .png .svg .gif .mp4)
 
@@ -96,7 +96,7 @@ defmodule Talk.Medias do
     |> Multi.insert(:media, Media.create_changeset(%Media{}, params))
     |> Multi.run(:url, fn _, %{media: %Media{filename: filename, type: type}} ->
       AssetStore.persist_file(filename, binary, type)
-      |> @adapter.public_url(@bucket)
+      |> S3Adapter.public_url(@bucket)
     end)
     |> Repo.transaction()
     |> case do

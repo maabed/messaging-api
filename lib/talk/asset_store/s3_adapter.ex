@@ -4,8 +4,6 @@ defmodule Talk.AssetStore.S3Adapter do
   alias ExAws.S3
   @cdn_url if Mix.env() == :dev, do: "https://images-local.sapien.network/", else: "https://images.sapien.network/"
   @giphy_url Application.get_env(:talk, :giphy_url)
-  @avatar_path Application.get_env(:talk, :avatar_dir)
-  @avatar_dir Application.get_env(:talk, :asset_store)[:avatar_dir]
 
   @behaviour Talk.AssetStore.Adapter
   require Logger
@@ -44,13 +42,12 @@ defmodule Talk.AssetStore.S3Adapter do
 
   end
 
-  def avatar_public_url(pathname) do
-    avatar_path = System.get_env("ASSET_AVATAR_DIR")
-    Logger.warn("avatar_dir config [@avatar_path] #{inspect @avatar_path}")
-    Logger.warn("avatar_dir System envs [avatar_path] #{inspect avatar_path}")
-    Logger.warn("avatar_dir old [@avatar_dir]  #{inspect @avatar_dir}")
-    Logger.warn("avatar_dir [pathname] #{inspect pathname}")
+  # def public_avatar_public_url("https://" <> _ = full_url) do
+  #   full_url
+  # end
 
-    @cdn_url <> "thumbnails/" <> pathname
+  def avatar_public_url(pathname) do
+    avatar_dir = Application.get_env(:talk, :avatar_dir)
+    @cdn_url <> avatar_dir <> "/" <> pathname
   end
 end

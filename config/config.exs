@@ -9,10 +9,10 @@ config :talk,
   jwt_aud: audience,
   user_agent_req: false,
   allowed_origins: origins,
-  avatar_dir: "thumbnails",
-  avatar_dir1: System.get_env("ASSET_AVATAR_DIR"),
+  priv_key: System.get_env("JWT_PRIVATE_KEY"),
   giphy_url: "https://media.giphy.com/media",
-  priv_key: System.get_env("JWT_PRIVATE_KEY")
+  bucket: System.get_env("ASSET_STORE_BUCKET"),
+  avatar_dir: System.get_env("ASSET_AVATAR_DIR")
 
 config :talk, Talk.Repo,
   adapter: Ecto.Adapters.Postgres,
@@ -35,11 +35,6 @@ config :talk, TalkWeb.Auth,
   allowed_drift: 2000,
   verify_issuer: true,
   secret_fetcher: TalkWeb.Auth.SecretFetcher
-
-config :talk, :asset_store,
-  bucket: System.get_env("ASSET_STORE_BUCKET"),
-  avatar_dir: System.get_env("ASSET_AVATAR_DIR"),
-  adapter: Talk.AssetStore.S3Adapter
 
 config :ex_aws,
   debug_requests: true,

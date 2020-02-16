@@ -1,15 +1,11 @@
 import Config
 
 config :talk,
-  avatar_dir: "thumbnails",
-  avatar_dir1: System.fetch_env!("ASSET_AVATAR_DIR"),
+  SECRET_KEY_BASE: System.fetch_env!("SECRET_KEY_BASE"),
   priv_key: System.fetch_env!("JWT_PRIVATE_KEY"),
-  SECRET_KEY_BASE: System.fetch_env!("SECRET_KEY_BASE")
-
-config :talk, :asset_store,
+  giphy_url: "https://media.giphy.com/media",
   bucket: System.fetch_env!("ASSET_STORE_BUCKET"),
-  avatar_dir: System.fetch_env!("ASSET_AVATAR_DIR"),
-  adapter: Talk.AssetStore.S3Adapter
+  avatar_dir: System.fetch_env!("ASSET_AVATAR_DIR")
 
 config :ex_aws,
   access_key_id: System.fetch_env!("AWS_ACCESS_KEY_ID"),
