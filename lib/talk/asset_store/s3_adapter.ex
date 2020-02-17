@@ -9,6 +9,7 @@ defmodule Talk.AssetStore.S3Adapter do
   require Logger
   @impl true
   def persist(pathname, bucket, data, content_type) do
+    Logger.warn("persist [bucket] #{inspect bucket}")
     opts = [
       # {:acl, :public_read},
       {:cache_control, "public, max-age=604800"},
@@ -26,6 +27,7 @@ defmodule Talk.AssetStore.S3Adapter do
 
   @impl true
   def public_url({:ok, pathname}, bucket) do
+    Logger.warn("public_url [bucket] #{inspect bucket}")
     {:ok, "https://s3.us-east-1.amazonaws.com/" <> bucket <> "/" <> pathname}
   end
 

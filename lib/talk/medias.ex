@@ -10,8 +10,6 @@ defmodule Talk.Medias do
   alias Talk.AssetStore.S3Adapter
   require Logger
 
-  @bucket Application.get_env(:talk, :bucket)
-  @giphy_url Application.get_env(:talk, :giphy_url)
   @allowed_format ~w(.jpg .jpeg .png .svg .gif .mp4)
 
   def get_medias(%User{profile: profile} = _user, media_ids) do
@@ -96,7 +94,7 @@ defmodule Talk.Medias do
     |> Multi.insert(:media, Media.create_changeset(%Media{}, params))
     |> Multi.run(:url, fn _, %{media: %Media{filename: filename, type: type}} ->
       AssetStore.persist_file(filename, binary, type)
-      |> S3Adapter.public_url(@bucket)
+      |> S3Adapter.public_url(bucket())
     end)
     |> Repo.transaction()
     |> case do
@@ -121,7 +119,8 @@ defmodule Talk.Medias do
     Multi.new()
     |> Multi.insert(:media, Media.create_changeset(%Media{}, params))
     |> Multi.run(:url, fn _, %{media: %Media{filename: filename}} ->
-        {:ok, @giphy_url <> "/" <> filename}
+        giphy_url = Application.get_env(:talk, :giphy_url)
+        {:ok, giphy_url <> "/" <> filename}
     end)
     |> Repo.transaction()
     |> case do
@@ -142,5 +141,9 @@ defmodule Talk.Medias do
       |> Enum.into(%{})
 
     {:ok, media }
+  end
+
+  defp bucket do
+    Application.get_env(:talk, :bucket)
   end
 end
