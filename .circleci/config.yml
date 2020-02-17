@@ -58,7 +58,7 @@ jobs:
       - run:
           name: Load image
           command: |
-            if [ "${CIRCLE_BRANCH}" == "development" ]; then
+            if [ "${CIRCLE_BRANCH}" == "development" ] || [ "${CIRCLE_BRANCH}" == "quality" ]; then
               docker load --input workspace/docker-image/image.tar
             fi
       - run:
@@ -66,6 +66,8 @@ jobs:
           command: |
             if [ "${CIRCLE_BRANCH}" == "development" ]; then
               echo 'export AWS_ENVIRONMENT="dev"' >> $BASH_ENV
+            elif [ "${CIRCLE_BRANCH}" == "quality" ]; then
+              echo 'export AWS_ENVIRONMENT="qat"' >> $BASH_ENV
             elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
               echo 'export AWS_ENVIRONMENT="stg"' >> $BASH_ENV
             elif [ "${CIRCLE_BRANCH}" == "master" ]; then
@@ -83,6 +85,11 @@ jobs:
               docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:latest
               MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY_NAME --image-ids imageTag=latest --query 'images[].imageManifest' --output text)
               aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag DEV --image-manifest "$MANIFEST"
+              aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag ${CIRCLE_SHA1} --image-manifest "$MANIFEST"
+            elif [ "${CIRCLE_BRANCH}" == "quality" ]; then
+              docker tag $ECR_REPOSITORY_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPOSITORY_NAME:QAT
+              docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:QAT
+              MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY_NAME --image-ids imageTag=QAT --query 'images[].imageManifest' --output text)
               aws ecr put-image --repository-name $ECR_REPOSITORY_NAME --image-tag ${CIRCLE_SHA1} --image-manifest "$MANIFEST"
             elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
               MANIFEST=$(aws ecr batch-get-image --repository-name $ECR_REPOSITORY_NAME --image-ids imageTag=DEV --query 'images[].imageManifest' --output text)
@@ -134,6 +141,7 @@ workflows:
             branches:
               only:
                 - development
+                - quality
   deploy-staging-master:
     jobs:
       - deploy:
