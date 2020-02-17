@@ -107,7 +107,7 @@ jobs:
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             aws ecs wait services-stable --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME
-            curl -sSLIk https://$ELB_DNS_NAME/api/health | grep " 200"
+            curl -sSLIk https://$ELB_DNS_NAME/health-check | grep " 200"
             if [ "${CIRCLE_BRANCH}" == "development" ]; then
               curl -sSLIk https://sapien-chat-dev.sapien.network/health-check | grep " 200"
             elif [ "${CIRCLE_BRANCH}" == "quality" ]; then
