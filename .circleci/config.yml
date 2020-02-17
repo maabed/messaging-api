@@ -109,11 +109,13 @@ jobs:
             aws ecs wait services-stable --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME
             curl -sSLIk https://$ELB_DNS_NAME/api/health | grep " 200"
             if [ "${CIRCLE_BRANCH}" == "development" ]; then
-              curl -sSLIk https://sapien-chat-stg.sapien.network/api/health | grep " 200"
+              curl -sSLIk https://sapien-chat-dev.sapien.network/health-check | grep " 200"
+            elif [ "${CIRCLE_BRANCH}" == "quality" ]; then
+              curl -sSLIk https://sapien-chat-qat.sapien.network/health-check | grep " 200"
             elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
-              curl -sSLIk https://sapien-chat-stg.sapien.network/api/health | grep " 200"
+              curl -sSLIk https://sapien-chat-stg.sapien.network/health-check | grep " 200"
             elif [ "${CIRCLE_BRANCH}" == "master" ]; then
-              curl -sSLIk https://sapien-chat.sapien.network/api/health | grep " 200"
+              curl -sSLIk https://sapien-chat.sapien.network/health-check | grep " 200"
             fi
 workflows:
   version: 2
