@@ -59,7 +59,7 @@ defmodule TalkWeb.Resolver.Groups do
       {:error, :invalid_recipients} -> {:error, "invalid recipients"}
 
       {:error, %Changeset{} = changeset} ->
-        %{success: false, group: nil, errors: Helpers.format_errors(changeset)}
+        {:ok, %{success: false, group: nil, errors: Helpers.format_errors(changeset)}}
 
       {:ok, true, group} ->
         {:ok, %{success: true, group: List.first(group), errors: []}}

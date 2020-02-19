@@ -4,7 +4,7 @@ defmodule Talk.Utils do
   alias Ecto.Changeset
 
   @doc "Regex for validating name format."
-  def name_pattern, do: ~r/^(?>[a-z0-9][a-z0-9-_.| ]*)$/ix
+  def name_pattern, do: ~r/^(?>[a-z0-9][a-z0-9-_.|\p{L} ]*)$/iu
 
   @doc "A changeset validation for name format, helps validating name, username format."
   @spec validate_format(Changeset.t(), atom()) :: Changeset.t()
