@@ -2,14 +2,13 @@ defmodule Talk.AssetStore.S3Adapter do
   @moduledoc false
 
   alias ExAws.S3
-  @cdn_url if Mix.env() == :dev, do: "https://images-local.sapien.network/", else: "https://images.sapien.network/"
+  @cdn_url if Mix.env() == :dev, do: "https://images-local.sapien.network/", else: "https://images-qat.sapien.network/"
   @giphy_url Application.get_env(:talk, :giphy_url)
 
   @behaviour Talk.AssetStore.Adapter
-  require Logger
+
   @impl true
   def persist(pathname, bucket, data, content_type) do
-    Logger.warn("persist [bucket] #{inspect bucket}")
     opts = [
       # {:acl, :public_read},
       {:cache_control, "public, max-age=604800"},
@@ -27,7 +26,6 @@ defmodule Talk.AssetStore.S3Adapter do
 
   @impl true
   def public_url({:ok, pathname}, bucket) do
-    Logger.warn("public_url [bucket] #{inspect bucket}")
     {:ok, "https://s3.us-east-1.amazonaws.com/" <> bucket <> "/" <> pathname}
   end
 

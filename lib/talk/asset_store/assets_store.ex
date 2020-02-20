@@ -29,8 +29,6 @@ defmodule Talk.AssetStore do
   end
 
   def media_url(%Media{filename: filename, extension: extension} = _media) do
-    Logger.warn("media_url [bucket] #{inspect bucket()}")
-
     filename
     |> S3Adapter.public_url(bucket(), extension)
   end
@@ -38,8 +36,6 @@ defmodule Talk.AssetStore do
   @doc "Uploads a file."
   @spec persist_file(String.t(), binary(), String.t()) :: {:ok, String.t()} | {:error, any()}
   def persist_file(filename, binary_data, type) do
-    Logger.warn("persist_file [bucket] #{inspect bucket()}")
-
     build_file_path(filename)
     |> S3Adapter.persist(bucket(), binary_data, type)
   end
