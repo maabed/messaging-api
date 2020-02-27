@@ -55,12 +55,26 @@ defmodule Talk.Events do
     publish_to_many_users(ids, :message_deleted, %{message: message})
   end
 
-  def messages_marked_as_read(ids, messages) do
-    publish_to_many_users(ids, :messages_marked_as_read, %{messages: messages})
+  def messages_marked_as_read(id, messages) do
+    msgs_count = length(messages)
+    publish_to_user(id, :messages_marked_as_read, %{messages: messages, read: msgs_count})
   end
 
   def messages_marked_as_unread(id, messages) do
-    publish_to_user(id, :messages_marked_as_unread, %{messages: messages})
+    msgs_count = length(messages)
+    publish_to_user(id, :messages_marked_as_unread, %{messages: messages, unread: msgs_count})
+  end
+
+  def user_total_unread_updated(id, total) do
+    publish_to_user(id, :user_total_unread_updated, %{total_unread: total})
+  end
+
+  def messages_marked_all_as_read(id, group_id, count) do
+    publish_to_user(id, :messages_marked_all_as_read, %{group_id: group_id, read: count})
+  end
+
+  def messages_marked_all_as_read(id, count) do
+    publish_to_user(id, :messages_marked_all_as_read, %{read: count})
   end
 
   def messages_marked_as_request(ids, messages) do

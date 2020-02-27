@@ -79,6 +79,13 @@ defmodule TalkWeb.Type.Message do
     field :messages, list_of(:message)
   end
 
+  object :mark_all_as_read_response do
+    interface :response
+    field :success, non_null(:boolean)
+    field :errors, list_of(:error)
+    field :read, list_of(:integer)
+  end
+
   object :message_reaction_mutation_response do
     interface :response
     field :success, non_null(:boolean)
@@ -88,7 +95,6 @@ defmodule TalkWeb.Type.Message do
   end
 
   object :report do
-    field :message_id, non_null(:id)
     field :reporter_id, non_null(:id)
     field :author_id, non_null(:id)
     field :status, :string
@@ -152,6 +158,12 @@ defmodule TalkWeb.Type.Message do
       resolve &Resolver.mark_as_read/2
     end
 
+    field :mark_all_as_read, type: :mark_all_as_read_response do
+      arg :group_id, :id
+      arg :profile_id, :id
+      resolve &Resolver.mark_all_as_read/2
+    end
+
     field :mark_as_request, type: :mark_as_unread_response do
       arg :message_ids, non_null(list_of(:id))
       arg :group_id, non_null(:id)
@@ -179,7 +191,6 @@ defmodule TalkWeb.Type.Message do
     field :create_report, :report_mutation_response do
       arg :type, :string
       arg :reason, non_null(:string)
-      arg :message_id, non_null(:id)
       arg :author_id, non_null(:id)
       resolve &Resolver.create_report/2
     end
@@ -207,7 +218,7 @@ defmodule TalkWeb.Type.Message do
     @desc "Filter by whether the message is a request."
     field :request_status, :request_status_filter, default_value: :all
 
-    @desc "Filter by group type."
+    @desc "Filter by message type."
     field :type, :type_filter, default_value: :all
 
     @desc "Filter by sender."

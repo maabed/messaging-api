@@ -10,7 +10,7 @@ defmodule Talk.Medias do
   alias Talk.AssetStore.S3Adapter
   require Logger
 
-  @allowed_format ~w(.jpg .jpeg .png .svg .gif .mp4)
+  @allowed_format ~w(.jpg .jpeg .png .gif .mp4)
 
   def get_medias(%User{profile: profile} = _user, media_ids) do
     profile
@@ -75,6 +75,14 @@ defmodule Talk.Medias do
   defp get_media_contents(%Plug.Upload{path: path_on_disk}) do
     Elixir.File.read(path_on_disk)
   end
+
+  # defp get_media_size(path) do
+  #   Logger.warn("path: #{inspect path}")
+  #   case File.stat(path) do
+  #     {:ok, %File.Stat{size: size}} -> {:ok, size}
+  #     {:error, reason} -> {:error, reason}
+  #   end
+  # end
 
   defp rename_media(ext) do
     AssetStore.random_alphabet() <> ext

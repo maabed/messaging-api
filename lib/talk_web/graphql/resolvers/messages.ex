@@ -14,18 +14,15 @@ defmodule TalkWeb.Resolver.Messages do
   alias Talk.Reactions.Connector, as: ReactionConnector
 
   @type info :: %{context: %{user: User.t(), loader: Dataloader.t()} | nil}
+  @type mutation_error :: [%{attribute: String.t(), message: String.t()}]
   @type paginated_result :: {:ok, Pagination.Result.t()} | {:error, String.t()}
   @type dataloader_result :: {:middleware, any(), any()}
   @type message_mutation_result :: {:ok, %{success: boolean(), message: Message.t() | nil,
-      errors: [%{attribute: String.t(), message: String.t()}]}} | {:error, String.t()}
-  @type message_reaction_result :: {:ok, %{
-              success: boolean(),
-              errors: [%{attribute: String.t(), message: String.t()}],
-              message: Message.t() | nil,
-              reaction: MessageReaction.t() | nil
-          }} | {:error, String.t()}
-@type reoprt_mutation_result :: {:ok, %{success: boolean(), report: Report.t() | nil,
-      errors: [%{attribute: String.t(), message: String.t()}]}} | {:error, String.t()}
+        errors: mutation_error}} | {:error, String.t()}
+  @type message_reaction_result :: {:ok, %{success: boolean(), message: Message.t() | nil,
+        reaction: MessageReaction.t() | nil, errors: mutation_error}} |{:error, String.t()}
+  @type reoprt_mutation_result :: {:ok, %{success: boolean(), report: Report.t() | nil,
+        errors: mutation_error}} | {:error, String.t()}
 
   def messages(%Group{} = group, args, info) do
     Connector.get(group, struct(Connector, args), info)
@@ -85,6 +82,7 @@ defmodule TalkWeb.Resolver.Messages do
   @spec create_message(map(), info()) :: message_mutation_result()
   def create_message(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
+         {:ok, true} <- Groups.can_access_group?(user, args.group_id),
          {:ok, %{message: message, media: media}} <- Messages.create_message(user, group, args) do
           result =
             case is_map(media) and not is_nil(media.url) do
@@ -98,6 +96,9 @@ defmodule TalkWeb.Resolver.Messages do
     else
       {:error, :message, changeset, _} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
 
       {:error, :media, :file_type_not_allowed, _} ->
         {:ok, %{
@@ -176,26 +177,35 @@ defmodule TalkWeb.Resolver.Messages do
   @spec delete_message(map(), info()) :: message_mutation_result()
   def delete_message(args, %{context: %{user: user}}) do
     with {:ok, message} <- Messages.get_message(user, args.message_id),
+         true <- Messages.can_edit?(user, message),
          {:ok, deleted_message} <- Messages.delete_message(user, message) do
       {:ok, %{success: true, message: deleted_message, errors: []}}
     else
       {:error, changeset} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
+      false ->
+        {:error, "You are not authorized to perform this action."}
+
       err ->
         err
     end
   end
 
   @spec mark_as_unread(map(), info()) :: message_mutation_result()
-          | {:error, String.t()}
   def mark_as_unread(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
+         {:ok, true} <- Groups.can_access_group?(user, args.group_id),
          {:ok, messages} <- Messages.get_messages(user, args.message_ids),
          {:ok, unread_messages} <- Messages.mark_as_unread(user.profile, group, messages) do
       {:ok, %{success: true, messages: unread_messages, errors: []}}
     else
       {:error, changeset} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
+
       err ->
         err
     end
@@ -204,12 +214,52 @@ defmodule TalkWeb.Resolver.Messages do
   @spec mark_as_read(map(), info()) :: message_mutation_result()
   def mark_as_read(args, %{context: %{user: user}}) do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
+         {:ok, true} <- Groups.can_access_group?(user, args.group_id),
          {:ok, messages} <- Messages.get_messages(user, args.message_ids),
          {:ok, read_messages} <- Messages.mark_as_read(user.profile, group, messages) do
       {:ok, %{success: true, messages: read_messages, errors: []}}
     else
       {:error, changeset} ->
         {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
+
+      err ->
+        err
+    end
+  end
+
+  @spec mark_all_as_read(map(), info()) :: message_mutation_result()
+  def mark_all_as_read(%{group_id: group_id}, %{context: %{user: user}}) do
+    with {:ok, group} <- Groups.get_group(user, group_id),
+         {:ok, true} <- Groups.can_access_group?(user, group_id),
+         {:ok, read_count} <- Messages.mark_all_as_read(user.profile, group) do
+      {:ok, %{success: true, read: read_count, errors: []}}
+    else
+      {:error, changeset} ->
+        {:ok, %{success: false, read: nil, errors: Helpers.format_errors(changeset)}}
+
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
+
+      err ->
+        err
+    end
+  end
+
+  @spec mark_all_as_read(map(), info()) :: message_mutation_result()
+  def mark_all_as_read(%{profile_id: profile_id}, %{context: %{user: current_user}}) do
+    with {:ok, user} <- Users.get_user_by_profile_id(current_user, profile_id),
+         {:ok, read_count} <- Messages.mark_all_as_read(user.profile) do
+      {:ok, %{success: true, read: read_count, errors: []}}
+    else
+      {:error, changeset} ->
+        {:ok, %{success: false, read: nil, errors: Helpers.format_errors(changeset)}}
+
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
+
       err ->
         err
     end
@@ -258,8 +308,8 @@ defmodule TalkWeb.Resolver.Messages do
 
   @spec create_report(map(), info()) :: message_reaction_result()
   def create_report(args, %{context: %{user: user}}) do
-    with {:ok, message} <- Messages.get_message(user, args.message_id),
-         {:ok, report} <- Messages.create_report(user, message, args) do
+    with {:ok, _reported_profile} <- Users.get_user_by_profile_id(args.author_id),
+         {:ok, report} <- Messages.create_report(user, args) do
       {:ok, %{success: true, errors: [], report: report}}
     else
       {:error, %Changeset{} = changeset} ->

@@ -6,7 +6,7 @@ defmodule Talk.Groups do
 
   alias Talk.Repo
   alias Ecto.Changeset
-  alias Talk.{Groups, Events}
+  alias Talk.{Groups, Events, Messages}
   alias Talk.Schemas.{Group, GroupUser, Message, MessageGroup, Profile, User}
 
   @spec groups_base_query(User.t()) :: Ecto.Query.t()
@@ -95,6 +95,49 @@ defmodule Talk.Groups do
         _ ->
           {:error, nil}
       end
+  end
+
+  def unread_count(%User{} = user, group_id) do
+    count =
+      user
+      |> Messages.Query.base_query()
+      |> Messages.Query.where_in_group(group_id)
+      |> Messages.Query.where_unread()
+      |> Repo.aggregate(:count, :id)
+
+    {:ok, count}
+  end
+
+  def read_count(%User{} = user, group_id) do
+    count =
+      user
+      |> Messages.Query.base_query()
+      |> Messages.Query.where_in_group(group_id)
+      |> Messages.Query.where_read()
+      |> Repo.aggregate(:count, :id)
+
+    {:ok, count}
+  end
+
+  def total_count(%User{} = user, group_id) do
+    count =
+      user
+      |> Messages.Query.base_query()
+      |> where([m, p, g, gu, mg], g.id == ^group_id and mg.read_status in ["UNREAD", "READ"])
+      |> Repo.aggregate(:count, :id)
+
+    {:ok, count}
+  end
+
+  def total_user_unread_count(%User{} = user) do
+    count =
+      user
+      |> Messages.Query.base_query()
+      |> Messages.Query.where_unread()
+      |> where([m, p, g, gu, mg], gu.status == "SUBSCRIBED")
+      |> Repo.aggregate(:count, :id)
+
+    {:ok, count}
   end
 
   @spec group_exists?(User.t(), [String.t()]) :: {:ok, boolean()} | {:error, String.t()}
@@ -211,7 +254,7 @@ defmodule Talk.Groups do
 
     query =
       from gu in subquery(base_query),
-        where: gu.status in ["SUBSCRIBED", "UNSUBSCRIBED"],
+        where: gu.status in ["SUBSCRIBED", "UNSUBSCRIBED", "MUTED"],
         order_by: {:asc, gu.username}
 
     {:ok, Repo.all(query)}

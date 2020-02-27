@@ -22,16 +22,9 @@ defmodule Talk.Messages.Query do
       left_join: gu in GroupUser,
       on: gu.profile_id == p.id and gu.group_id == g.id,
       left_join: mg in assoc(m, :message_groups),
-      # left_join: mg in MessageGroup,
-      on: mg.profile_id == p.id, # and mg.group_id == gu.group_id,
+      on: mg.profile_id == p.id,
       where: gu.profile_id == ^profile_id and m.status != "DELETED" and g.is_private == true,
       distinct: m.id
-  end
-
-  @spec where_in_group(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
-  def where_in_specific_group(query, group_id) do
-    from [m, p, g, gu] in query,
-      where: g.id == ^group_id
   end
 
   @spec where_in_group(Ecto.Query.t(), String.t()) :: Ecto.Query.t()
@@ -95,27 +88,46 @@ defmodule Talk.Messages.Query do
     where(query, [m, p, g, gu, mg], mg.read_status == "UNREAD")
   end
 
+  @spec where_read_and_unread(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_read_and_unread(query) do
+    where(query, [m, p, g, gu, mg], mg.read_status in ["UNREAD", "READ"])
+  end
+
   @spec where_is_follower(Ecto.Query.t()) :: Ecto.Query.t()
   def where_is_follower(query) do
-    where(query, [m, p, g, gu], m.is_request == false)
+    where(query, [m, p, g, gu, mg], m.is_request == false)
   end
 
   @spec where_is_request(Ecto.Query.t()) :: Ecto.Query.t()
   def where_is_request(query) do
-    where(query, [m, p, g, gu], m.is_request == true)
+    where(query, [m, p, g, gu, mg], m.is_request == true)
   end
 
   @spec where_subscribed(Ecto.Query.t()) :: Ecto.Query.t()
   def where_subscribed(query) do
-    from [m, p, g, gu] in query,
+    from [m, p, g, gu, mg] in query,
       where: gu.status == "SUBSCRIBED",
       group_by: m.id
   end
 
   @spec where_unsubscribed(Ecto.Query.t()) :: Ecto.Query.t()
   def where_unsubscribed(query) do
-    from [m, p, g, gu] in query,
+    from [m, p, g, gu, mg] in query,
       where: gu.status == "UNSUBSCRIBED",
+      group_by: m.id
+  end
+
+  @spec where_muted(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_muted(query) do
+    from [m, p, g, gu, mg] in query,
+      where: gu.status == "MUTED",
+      group_by: m.id
+  end
+
+  @spec where_archived(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_archived(query) do
+    from [m, p, g, gu, mg] in query,
+      where: gu.status == "ARCHIVED",
       group_by: m.id
   end
 
@@ -124,6 +136,21 @@ defmodule Talk.Messages.Query do
     from m in query,
       left_join: p in assoc(m, :profile),
       where: p.username == ^username
+  end
+
+  @spec where_type_text(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_type_text(query) do
+    where(query, [m, p, g, gu, mg], m.type == "TEXT")
+  end
+
+  @spec where_type_image(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_type_image(query) do
+    where(query, [m, p, g, gu, mg], m.type == "IMAGE")
+  end
+
+  @spec where_type_video(Ecto.Query.t()) :: Ecto.Query.t()
+  def where_type_video(query) do
+    where(query, [m, p, g, gu, mg], m.type == "VIDEO")
   end
 
   @spec where_specific_recipients(Ecto.Query.t(), [String.t()]) :: Ecto.Query.t()
@@ -144,23 +171,17 @@ defmodule Talk.Messages.Query do
       where: fragment("? <@ ?::varchar[]", m.recipient_username, ^usernames)
   end
 
-  @spec where_type_direct(Ecto.Query.t()) :: Ecto.Query.t()
-  def where_type_direct(query) do
-    from g in query,
-      where: is_nil(g.id)
-  end
+  # @spec where_type_direct(Ecto.Query.t()) :: Ecto.Query.t()
+  # def where_type_direct(query) do
+  #   from g in query,
+  #     where: is_nil(g.id)
+  # end
 
-  @spec where_type_group(Ecto.Query.t()) :: Ecto.Query.t()
-  def where_type_group(query) do
-    from g in query,
-      where: not is_nil(g.id)
-  end
-
-  @spec where_type_all(Ecto.Query.t()) :: Ecto.Query.t()
-  def where_type_all(query) do
-    from g in query,
-      where: is_nil(g.id)
-  end
+  # @spec where_type_group(Ecto.Query.t()) :: Ecto.Query.t()
+  # def where_type_group(query) do
+  #   from g in query,
+  #     where: not is_nil(g.id)
+  # end
 
   @spec count(Ecto.Query.t()) :: Ecto.Query.t()
   def count(query) do

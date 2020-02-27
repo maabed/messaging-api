@@ -33,12 +33,12 @@ defmodule Talk.Messages.Connector do
           before: String.t() | nil,
           after: String.t() | nil,
           filter: %{
-            subscribe_status: :subscribed | :subscribed | :all,
+            subscribe_status: :subscribed | :subscribed | :muted | :archived | :all,
             read_status: :read | :unread | :all,
             status: :valid | :expired | :deleted | :all,
             last_activity: :today | :all,
             request_status: :follower | :request | :all,
-            type: :direct | :group | :all,
+            type: :text | :image | :video | :all,
             sender: String.t(),
             recipients: [String.t()],
             group_id: String.t()
@@ -107,8 +107,17 @@ defmodule Talk.Messages.Connector do
   defp apply_subscribe_status(base_query, %{filter: %{subscribe_status: :subscribed}}) do
     Messages.Query.where_subscribed(base_query)
   end
+
   defp apply_subscribe_status(base_query, %{filter: %{subscribe_status: :unsubscribed}}) do
     Messages.Query.where_unsubscribed(base_query)
+  end
+
+  defp apply_subscribe_status(base_query, %{filter: %{subscribe_status: :muted}}) do
+    Messages.Query.where_muted(base_query)
+  end
+
+  defp apply_subscribe_status(base_query, %{filter: %{subscribe_status: :archived}}) do
+    Messages.Query.where_archived(base_query)
   end
 
   defp apply_subscribe_status(base_query, _), do: base_query
@@ -163,21 +172,21 @@ defmodule Talk.Messages.Connector do
   defp apply_recipients(base_query, _), do: base_query
 
   defp where_in_specific_group(base_query, %{filter: %{group_id: group_id}}) do
-    Messages.Query.where_in_specific_group(base_query, group_id)
+    Messages.Query.where_in_group(base_query, group_id)
   end
 
   defp where_in_specific_group(base_query, _), do: base_query
 
-  defp apply_type(base_query, %{filter: %{type: :direct}}) do
-    Messages.Query.where_type_direct(base_query)
+  defp apply_type(base_query, %{filter: %{type: :text}}) do
+    Messages.Query.where_type_text(base_query)
   end
 
-  defp apply_type(base_query, %{filter: %{type: :group}}) do
-    Messages.Query.where_type_group(base_query)
+  defp apply_type(base_query, %{filter: %{type: :image}}) do
+    Messages.Query.where_type_image(base_query)
   end
 
-  defp apply_type(base_query, %{filter: %{type: :all}}) do
-    base_query
+  defp apply_type(base_query, %{filter: %{type: :video}}) do
+    Messages.Query.where_type_video(base_query)
   end
 
   defp apply_type(base_query, _), do: base_query

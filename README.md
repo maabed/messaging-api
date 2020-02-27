@@ -14,7 +14,7 @@ To start chat server:
 * Create and migrate database with `mix ecto.setup`
 * Start Phoenix endpoint with `source .env && iex -S mix phx.server`
 
-Graphql endpoint at [`localhost:7000/chat-graphql`](http://localhost:7000/graphql)
+Graphql endpoint at [`localhost:7000/chat-graphql`](http://localhost:7000/chat-graphql)
 GraphiQL playground at [`localhost:7000/graphiql`](http://localhost:7000/graphiql)
 
 ## Docker setup
