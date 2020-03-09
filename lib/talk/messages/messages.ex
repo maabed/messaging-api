@@ -6,7 +6,7 @@ defmodule Talk.Messages do
 
   alias Talk.Repo
   alias Ecto.Changeset
-  alias Talk.{Events, Messages}
+  alias Talk.{Events, Groups, Messages}
   alias Talk.Messages.{CreateMessage, UpdateMessage}
   alias Talk.Schemas.{
     Group,
@@ -123,16 +123,17 @@ defmodule Talk.Messages do
   end
 
   @spec delete_message(User.t(), Message.t()) :: {:ok, Message.t()} | {:error, Changeset.t()}
-  def delete_message(_user, message) do
+  def delete_message(user, message) do
     message
     |> Changeset.change(status: "DELETED")
     |> Repo.update()
-    |> after_delete_message()
+    |> after_delete_message(user)
   end
 
-  defp after_delete_message({:ok, message} = result) do
+  defp after_delete_message({:ok, message} = result, %User{profile: profile} = _user) do
     {:ok, profile_ids} = Messages.get_accessor_ids(message)
     _ = Events.message_deleted(profile_ids, message)
+    MessageLog.message_deleted(message, profile)
     result
   end
 
@@ -149,6 +150,9 @@ defmodule Talk.Messages do
     end)
 
     Events.messages_marked_as_unread(profile.id, messages)
+
+    {:ok, counts} = Groups.total_user_unread_count(%User{profile_id: profile.id})
+    Events.user_total_unread_updated(profile.id, counts)
     result
   end
 
@@ -156,18 +160,66 @@ defmodule Talk.Messages do
   def mark_as_read(%Profile{} = profile, group, messages) do
     profile.id
     |> update_users_read_status(group, messages, %{read_status: "READ"})
-    |> after_mark_as_read(profile)
+    |> after_mark_as_read(profile, group)
   end
 
-  defp after_mark_as_read({:ok, messages} = result, profile) do
+  defp after_mark_as_read({:ok, messages} = result, profile, group) do
     Enum.each(messages, fn m ->
       MessageLog.marked_as_read(m, profile)
     end)
 
-    {:ok, profile_ids} = Messages.get_accessor_ids(Enum.at(messages, 0))
-    Events.messages_marked_as_read(profile_ids, messages)
+    {:ok, ids} = Groups.get_accessor_ids(group)
+
+    Enum.each(ids, fn id ->
+      if id !== profile.id do
+        Events.messages_marked_as_read(id, messages)
+      end
+    end)
+
+    {:ok, counts} = Groups.total_user_unread_count(%User{profile_id: profile.id})
+    Events.user_total_unread_updated(profile.id, counts)
     result
   end
+
+  @spec mark_all_as_read(Profile.t(), Group.t()) :: {:ok, boolean()} | {:error, Changeset.t()}
+  def mark_all_as_read(%Profile{id: profile_id}, %Group{id: group_id}) do
+    from(
+      mg in MessageGroup,
+        where: mg.profile_id == ^profile_id and mg.group_id == ^group_id
+    )
+    |> Repo.update_all(set: [
+        read_status: "READ",
+        updated_at: NaiveDateTime.utc_now()
+      ])
+    |> after_mark_all_as_read(profile_id, group_id)
+  end
+
+  @spec mark_all_as_read(Profile.t()) :: {:ok, boolean()} | {:error, Changeset.t()}
+  def mark_all_as_read(%Profile{id: profile_id}) do
+    from(
+      mg in MessageGroup,
+        where: mg.profile_id == ^profile_id
+    )
+    |> Repo.update_all(set: [
+        read_status: "READ",
+        updated_at: NaiveDateTime.utc_now()
+      ])
+    |> after_mark_all_as_read(profile_id)
+  end
+
+  defp after_mark_all_as_read({count, nil}, profile_id, group_id) do
+    Events.messages_marked_all_as_read(profile_id, group_id, count)
+    {:ok, count}
+  end
+
+  defp after_mark_all_as_read(error, _, _), do: error # group_id
+
+  defp after_mark_all_as_read({count, nil}, profile_id) do
+    Events.messages_marked_all_as_read(profile_id, count)
+    {:ok, count}
+  end
+
+  defp after_mark_all_as_read(error, _), do: error
 
   def can_access_message?(user, message_id) do
     case Messages.get_message(user, message_id) do
@@ -221,7 +273,7 @@ defmodule Talk.Messages do
         {:ok, true} ->
           from p in Profile,
             left_join: mg in MessageGroup,
-            on: mg.message_id == ^message_id and mg.profile_id == p.id,
+            on: mg.message_id == ^message_id,
             left_join: gu in GroupUser,
             on: gu.group_id == mg.group_id and gu.profile_id == p.id,
             where: not is_nil(gu.id),
@@ -323,30 +375,41 @@ defmodule Talk.Messages do
   end
 
   defp update_user_status(profile_id, group, message, params) do
-    full_params =
-      params
-      |> Map.put(:message_id, message.id)
-      |> Map.put(:group_id, group.id)
-      |> Map.put(:profile_id, profile_id)
+    exists =
+      Repo.get_by(MessageGroup,
+        message_id: message.id,
+        profile_id: profile_id,
+        group_id: group.id)
 
-    %MessageGroup{}
-    |> Changeset.change(full_params)
-    |> Repo.insert(
-      on_conflict: :replace_all,
-      conflict_target: [:message_id, :group_id, :profile_id]
-    )
-    |> after_update_user_status()
+    case exists do
+      nil ->
+        full_params =
+          params
+          |> Map.put(:message_id, message.id)
+          |> Map.put(:group_id, group.id)
+          |> Map.put(:profile_id, profile_id)
+
+        %MessageGroup{}
+        |> MessageGroup.create_changeset(full_params)
+        |> Repo.insert(on_conflict: :nothing, returning: true)
+        |> after_update_user_status()
+
+      %MessageGroup{} = message_group ->
+        message_group
+        |> Changeset.change(read_status: params.read_status)
+        |> Repo.update()
+        |> after_update_user_status()
+    end
   end
 
   defp after_update_user_status({:ok, _}), do: :ok
   defp after_update_user_status(_), do: :error
 
-  @spec create_report(User.t(), Message.t(), map()) :: create_message_result()
-  def create_report(%User{} = user, %Message{} = message, %{author_id: author_id, reason: reason, type: type}) do
+  @spec create_report(User.t(), map()) :: create_message_result()
+  def create_report(%User{} = user, %{author_id: author_id, reason: reason, type: type}) do
     params = %{
       reporter_id: user.profile_id,
       author_id: author_id,
-      message_id: message.id,
       reason: reason,
       type: type
     }

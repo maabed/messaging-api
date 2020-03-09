@@ -1,13 +1,13 @@
 defmodule Talk.Messages.CreateMessage do
   @moduledoc false
 
-  import Ecto.Query
+  # import Ecto.Query
   require Logger
 
   alias Talk.Repo
   alias Ecto.Multi
   alias Talk.{Events, Medias, Groups, Messages}
-  alias Talk.Schemas.{Group, Message, MessageGroup, MessageLog, Profile, User}
+  alias Talk.Schemas.{Group, Message, MessageGroup, MessageLog, User}
 
   @type result :: {:ok, map()} | {:error, any(), any(), map()}
 
@@ -68,49 +68,48 @@ defmodule Talk.Messages.CreateMessage do
     end)
   end
 
-  defp after_insert_message({:ok, %{message: message} = result}, user, group, params) do
-    subscribe_recipients(message, group, user, params)
+  defp after_insert_message({:ok, %{message: message} = result}, user, group, _params) do
+    # subscribe_recipients(message, group, user, params)
     subscribe_group_users(message, result, user)
-    send_events(message)
+    send_events(message, group)
     {:ok, result}
   end
 
   defp after_insert_message(err, _, _, _), do: err
 
-  defp subscribe_recipients(_message, _group, _user, %{recipient_usernames: []}), do: nil
+  # defp subscribe_recipients(_message, _group, _user, %{recipient_usernames: []}), do: nil
 
-  defp subscribe_recipients(message, group, user, %{recipient_usernames: usernames}) do
-    query =
-      from p in Profile,
-        where: p.username in ^usernames
+  # defp subscribe_recipients(message, group, user, %{recipient_usernames: usernames}) do
+  #   query =
+  #     from p in Profile,
+  #       where: p.username in ^usernames
 
-    recipients = Repo.all(query)
-    Enum.each(recipients, fn recipient ->
-      if recipient.user_id === user.id do
-        Messages.mark_as_read(recipient, group, [message])
-      else
-        Messages.mark_as_unread(recipient, group, [message])
-      end
-    end)
-  end
+  #   recipients = Repo.all(query)
+  #   Enum.each(recipients, fn recipient ->
+  #     Logger.warn("create_message => subscribe_recipients [recipient] => #{inspect recipient.username, pretty: true}")
+  #     if recipient.user_id === user.id do
+  #       Messages.mark_as_read(recipient, group, [message])
+  #     else
+  #       Messages.mark_as_unread(recipient, group, [message])
+  #     end
+  #   end)
+  # end
 
-  defp subscribe_recipients(_message, _group, _user, _params), do: nil
+  # defp subscribe_recipients(_message, _group, _user, _params), do: nil
 
   defp subscribe_group_users(message, %{groups: group}, user) do
     {:ok, group_users} = Groups.list_members(group)
     group_users = Repo.preload(group_users, :profile)
 
     Enum.each(group_users, fn group_user ->
-      if group_user.profile.user_id === user.id do
-        Messages.mark_as_read(group_user.profile, group, [message])
-      else
+      if group_user.profile.user_id != user.id do
         Messages.mark_as_unread(group_user.profile, group, [message])
       end
     end)
   end
 
-  defp send_events(message) do
-    {:ok, profile_ids} = Messages.get_accessor_ids(message)
+  defp send_events(message, group) do
+    {:ok, profile_ids} = Groups.get_accessor_ids(group)
     Events.message_created(profile_ids, message)
   end
 end

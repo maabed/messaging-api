@@ -59,14 +59,17 @@ defmodule TalkWeb.Type.Enum do
   end
 
   enum :subscribe_status_filter do
-    value :subscribed
     value :unsubscribed
+    value :subscribed
+    value :archived
+    value :mutde
     value :all
   end
 
   enum :type_filter do
-    value :direct
-    value :group
+    value :text
+    value :image
+    value :video
     value :all
   end
 

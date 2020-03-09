@@ -5,7 +5,7 @@ defmodule Talk.Schemas.Report do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Talk.Schemas.{Message, Profile}
+  alias Talk.Schemas.Profile
 
   @type t :: %__MODULE__{}
   @timestamps_opts [type: :utc_datetime_usec]
@@ -14,7 +14,7 @@ defmodule Talk.Schemas.Report do
     field :status, :string, default: "active" # active, dismissed, deleted
     field :reason, :string
 
-    belongs_to :message, Message
+    # belongs_to :message, Message
     belongs_to(
       :author, Profile,
       type: :string,
@@ -33,8 +33,8 @@ defmodule Talk.Schemas.Report do
 
   def create_changeset(struct, attrs) do
     struct
-    |> cast(attrs, [:type, :reason, :author_id, :reporter_id, :message_id])
-    |> validate_required([:author_id, :reporter_id, :message_id])
+    |> cast(attrs, [:type, :reason, :author_id, :reporter_id])
+    |> validate_required([:author_id, :reporter_id])
   end
 
   def update_changeset(struct, attrs \\ %{}) do

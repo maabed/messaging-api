@@ -12,13 +12,14 @@ defmodule TalkWeb.Resolver.Groups do
   require Logger
 
   @type info :: %{context: %{user: User.t(), loader: Dataloader.t()} | nil}
+  @type mutation_error :: [%{attribute: String.t(), message: String.t()}]
   @type paginated_result :: {:ok, Pagination.Result.t()} | {:error, String.t()}
   @type group_mutation_result :: {:ok, %{success: boolean(), group: Group.t() | nil,
-    errors: [%{attribute: String.t(), message: String.t()}]}} | {:error, String.t()}
+        errors: mutation_error}} | {:error, String.t()}
   @type subscribe_to_group_response :: {:ok, %{success: boolean(), group: Group.t(),
-    errors: [%{attribute: String.t(), message: String.t()}]}} | {:error, String.t()}
-  @type bookmark_group_response :: {:ok, %{is_bookmarked: boolean(), group: Group.t()}}
-    | {:error, String.t()}
+        errors: mutation_error}} | {:error, String.t()}
+  @type bookmark_group_response :: {:ok, %{is_bookmarked: boolean(), group: Group.t()}} |
+        {:error, String.t()}
 
   @spec group(map(), info()) :: {:ok, Group.t()} | {:error, String.t()}
   def group(%{id: id} = _args, %{context: %{user: user}}) do
@@ -59,7 +60,7 @@ defmodule TalkWeb.Resolver.Groups do
       {:error, :invalid_recipients} -> {:error, "invalid recipients"}
 
       {:error, %Changeset{} = changeset} ->
-        %{success: false, group: nil, errors: Helpers.format_errors(changeset)}
+        {:ok, %{success: false, group: nil, errors: Helpers.format_errors(changeset)}}
 
       {:ok, true, group} ->
         {:ok, %{success: true, group: List.first(group), errors: []}}

@@ -41,6 +41,10 @@ defmodule TalkWeb.Type.User do
     field :avatar, :string, resolve: &UserResolver.avatar_url/3
   end
 
+  object :user_message_counts do
+    field :unread, non_null(:integer)
+  end
+
   object :user_queries do
     field :user, :user do
       arg :id, :id
@@ -50,8 +54,13 @@ defmodule TalkWeb.Type.User do
     end
 
     field :users_search, list_of(:user_search_result) do
-        arg :term, non_null(:string)
+      arg :term, non_null(:string)
       resolve &UserResolver.search/2
+    end
+
+    field :unread_count, :user_message_counts do
+      arg :profile_id, non_null(:string)
+      resolve &UserResolver.unread_count/2
     end
   end
 

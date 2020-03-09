@@ -22,6 +22,12 @@ defmodule TalkWeb.Type.Group do
     field :updated_at, non_null(:timestamp)
     field :profile, non_null(:profile), resolve: dataloader(:db)
 
+    field :unread_count, :integer do
+      resolve fn group, _, %{context: %{user: user}} ->
+        Groups.unread_count(user, group.id)
+      end
+    end
+
     field :messages, non_null(:message_pagination) do
       arg :first, :integer
       arg :last, :integer

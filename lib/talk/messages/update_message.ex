@@ -93,20 +93,12 @@ defmodule Talk.Messages.UpdateMessage do
 
   defp update_messages_request_status(messages, params) do
     updated_messages =
-      Enum.filter(messages, fn msg ->
-        :ok == update_request_status(msg, params)
+      Enum.map(messages, fn message ->
+        message
+        |> Message.update_changeset(params)
+        |> Repo.update!(force: true)
       end)
 
     {:ok, updated_messages}
   end
-
-  defp update_request_status(message, params) do
-    message
-    |> Message.update_changeset(params)
-    |> Repo.update()
-    |> after_update_request_status()
-  end
-
-  defp after_update_request_status({:ok, _}), do: :ok
-  defp after_update_request_status(_), do: :error
 end

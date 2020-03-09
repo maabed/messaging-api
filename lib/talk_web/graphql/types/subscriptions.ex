@@ -3,8 +3,8 @@ defmodule TalkWeb.Type.Subscriptions do
 
   use Absinthe.Schema.Notation
 
-  alias Talk.Groups
-
+  alias Talk.{Groups, Users}
+  require Logger
   @desc "The users and messages topic response."
   union :user_subscription_response do
     types [
@@ -18,6 +18,8 @@ defmodule TalkWeb.Type.Subscriptions do
       :group_unbookmarked_response,
       :messages_marked_as_read_response,
       :messages_marked_as_unread_response,
+      :messages_marked_all_as_read_response,
+      :user_total_unread_updated_response,
       :message_reaction_created_response,
       :message_reaction_deleted_response,
       :messages_marked_as_request_response,
@@ -70,14 +72,25 @@ defmodule TalkWeb.Type.Subscriptions do
 
   object :messages_marked_as_unread_response do
     field :messages, list_of(:message)
+    field :unread, :integer
   end
 
   object :messages_marked_as_read_response do
     field :messages, list_of(:message)
+    field :read, :integer
+  end
+
+  object :messages_marked_all_as_read_response do
+    field :group_id, :id
+    field :read, non_null(:integer)
   end
 
   object :messages_marked_as_request_response do
     field :messages, list_of(:message)
+  end
+
+  object :user_total_unread_updated_response do
+    field :total_unread, non_null(:integer)
   end
 
   object :messages_marked_as_not_request_response do
@@ -109,8 +122,20 @@ defmodule TalkWeb.Type.Subscriptions do
     subscription do
       @desc "Triggered when a users/messages related event occurs."
       field :user_subscription, :user_subscription_response do
-        config fn _, %{context: %{user: user}} ->
-          {:ok, topic: user.profile_id}
+        arg :profile_id, non_null(:id)
+
+        config fn %{profile_id: id}, %{context: %{user: user}} ->
+          case Users.get_user_by_profile_id(user, id) do
+            {:ok, current_user} ->
+              if current_user.profile_id == user.profile_id do
+                {:ok, topic: id}
+              else
+                {:error, "Not authorized"}
+              end
+
+            err ->
+              err
+          end
         end
       end
 
@@ -128,23 +153,6 @@ defmodule TalkWeb.Type.Subscriptions do
           end
         end
       end
-      # field :user_subscription, :user_subscription_response do
-      #   arg :user_id, non_null(:id)
-
-      #   config fn %{user_id: id}, %{context: %{user: user}} ->
-      #     case Users.get_user(user, id) do
-      #       {:ok, user} ->
-      #         if user.user_id == user.id do
-      #           {:ok, topic: id}
-      #         else
-      #           {:error, "Not authorized"}
-      #         end
-
-      #       err ->
-      #         err
-      #     end
-      #   end
-      # end
     end
   end
 
