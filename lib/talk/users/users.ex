@@ -14,6 +14,9 @@ defmodule Talk.Users do
   def user_base_query() do
     from(u in User,
       join: p in assoc(u, :profile),
+      where: not is_nil(p.selected_at),
+      order_by: [desc: p.selected_at],
+      limit: 1,
       select: %User{
         id: u.id,
         email: u.email,

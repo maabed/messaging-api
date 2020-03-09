@@ -175,7 +175,6 @@ defmodule Talk.Messages do
         Events.messages_marked_as_read(id, messages)
       end
     end)
-    started = System.monotonic_time()
 
     {:ok, counts} = Groups.total_user_unread_count(%User{profile_id: profile.id})
     Events.user_total_unread_updated(profile.id, counts)
