@@ -282,6 +282,8 @@ defmodule Talk.Messages do
 
         _ ->
           from p in Profile,
+            order_by: [desc_nulls_last: p.selected_at],
+            distinct: p.user_id,
             select: p.id
       end
 
