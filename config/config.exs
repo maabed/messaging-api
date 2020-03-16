@@ -12,7 +12,8 @@ config :talk,
   priv_key: System.get_env("JWT_PRIVATE_KEY"),
   giphy_url: "https://media.giphy.com/media",
   bucket: System.get_env("ASSET_STORE_BUCKET"),
-  avatar_dir: System.get_env("ASSET_AVATAR_DIR")
+  avatar_dir: System.get_env("ASSET_AVATAR_DIR"),
+  cdn_prefix: System.get_env("CDN_PREFIX")
 
 config :talk, Talk.Repo,
   adapter: Ecto.Adapters.Postgres,

@@ -16,7 +16,7 @@ defmodule Talk.Groups do
   def group_members_base_query(group), do: Groups.Query.members_base_query(group)
 
   @spec group_recipients_base_query(User.t(), [String.t()]) :: Ecto.Query.t()
-  def group_recipients_base_query(user, recipient_usernames), do: Groups.Query.recipients_base_query(user, recipient_usernames)
+  def group_recipients_base_query(user, recipient_ids), do: Groups.Query.recipients_base_query(user, recipient_ids)
 
   @spec get_accessor_ids(Group.t()) :: {:ok, [String.t()]} | no_return()
   def get_accessor_ids(%Group{id: group_id, is_private: is_private}) do
@@ -63,9 +63,9 @@ defmodule Talk.Groups do
   end
 
   @spec get_group_by_recipients(User.t(), [String.t()]) :: {:ok, Group.t()} | {:error, String.t()}
-  def get_group_by_recipients(%User{} = user, recipient_usernames) do
+  def get_group_by_recipients(%User{} = user, recipient_ids) do
     query =
-      from g in group_recipients_base_query(user, recipient_usernames),
+      from g in group_recipients_base_query(user, recipient_ids),
         limit: 1
 
     case Repo.one(query) do
@@ -141,9 +141,9 @@ defmodule Talk.Groups do
   end
 
   @spec group_exists?(User.t(), [String.t()]) :: {:ok, boolean()} | {:error, String.t()}
-  def group_exists?(%User{} = user, recipient_usernames) do
+  def group_exists?(%User{} = user, recipient_ids) do
     groups =
-      group_recipients_base_query(user, recipient_usernames)
+      group_recipients_base_query(user, recipient_ids)
       |> Repo.all()
 
     {:ok, length(groups) >= 1, groups}
@@ -162,44 +162,48 @@ defmodule Talk.Groups do
   defp handle_get_group_user(_), do: {:ok, nil}
 
   @spec create_group(User.t(), map()) :: {:ok, %{group: Group.t()}} | {:error, Changeset.t()}
-  def create_group(user, %{recipient_usernames: recipient_usernames} = params \\ %{}) do
-    usernames = Enum.uniq([user.username | recipient_usernames])
+  def create_group(user, %{recipient_ids: recipient_ids} = params \\ %{}) do
+    case Repo.exists?(Profile, recipient_ids) do
+      false -> {:error, :recipient_not_found}
+      true ->
+        ids = Enum.uniq([user.profile_id | recipient_ids])
+        query = from p in Profile,
+          where: p.id in ^ids,
+          order_by: [desc: p.selected_at],
+          distinct: p.user_id
 
-    query =
-      from p in Profile,
-        where: p.username in ^usernames
+        case Repo.all(query) do
+          [] -> {:error, :recipients_not_found}
+          recipients ->
+            case length(recipients) do
+              1 -> {:error, :recipient_not_found} # saved messages?
+              2 ->
+                group_name =
+                  recipients
+                  |> Enum.map(fn recipient ->
+                    recipient.username
+                    |> String.downcase()
+                    |> String.replace(~r/\s+/, "_")
+                  end)
+                  |> Enum.uniq()
+                  |> Enum.sort()
+                  |> Enum.join("||")
 
-    case Repo.all(query) do
-      [] -> {:error, :recipients_not_found}
-      recipients ->
-        case length(recipients) do
-          1 -> {:error, :one_recipient} # saved messages?
-          2 ->
-            group_name =
-              recipients
-              |> Enum.map(fn recipient ->
-                recipient.username
-                |> String.downcase()
-                |> String.replace(~r/\s+/, "_")
-              end)
-              |> Enum.uniq()
-              |> Enum.sort()
-              |> Enum.join("||")
+                params_with_relations =
+                  params
+                  |> Map.delete(:recipient_ids)
+                  |> Map.put(:profile_id, user.profile_id)
+                  |> Map.put(:name, "d-#{group_name}")
 
-            params_with_relations =
-              params
-              |> Map.delete(:recipient_usernames)
-              |> Map.put(:profile_id, user.profile_id)
-              |> Map.put(:name, "d-#{group_name}")
+                %Group{}
+                |> Group.create_changeset(params_with_relations)
+                |> Repo.insert()
+                |> after_create_group(user, recipients)
 
-            %Group{}
-            |> Group.create_changeset(params_with_relations)
-            |> Repo.insert()
-            |> after_create_group(user, recipients)
-
-          # change when add support for groups > 2 users
-          recipient_count when recipient_count > 2 -> {:error, :more_than_two_recipients}
-          _ -> {:error, :error}
+              # change when add support for groups > 2 users
+              recipient_count when recipient_count > 2 -> {:error, :more_than_two_recipients}
+              _ -> {:error, :error}
+            end
         end
     end
   end

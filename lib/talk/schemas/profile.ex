@@ -11,10 +11,11 @@ defmodule Talk.Schemas.Profile do
   schema "profiles" do
     field :user_id, :string, source: :userId
     field :username, :string
-    field :thumbnail, :map, load_in_query: false
+    field :thumbnail, :map
     field :display_name, :string, source: :displayName
     field :inserted_at, :utc_datetime_usec, source: :created_at
     field :updated_at, :utc_datetime_usec
+    field :selected_at, :utc_datetime_usec
 
     field :avatar, :string, virtual: true # Holds user avatar url
     field :rank, :integer, virtual: true # Holds user rank on search query
@@ -33,7 +34,6 @@ defmodule Talk.Schemas.Profile do
     # field :contactInformation, :map
     # field :emailNotifications, :map
     # field :notificationSettings, :map
-    # field :selected_at, :utc_datetime_usec
 
     belongs_to(
       :user, User,
@@ -48,36 +48,9 @@ defmodule Talk.Schemas.Profile do
     has_many :groups, Group
     has_many :messages, Message
     has_many :group_users, GroupUser
-
-    many_to_many(
-      :followers,
-      __MODULE__,
-      join_through: Follower,
-      join_keys: [follower_id: :id, following_id: :id],
-      on_replace: :delete
-    )
-
-    many_to_many(
-      :followings,
-      __MODULE__,
-      join_through: Follower,
-      join_keys: [following_id: :id, follower_id: :id],
-      on_replace: :delete
-    )
-    many_to_many(
-      :blocked_by,
-      __MODULE__,
-      join_through: BlockedProfile,
-      join_keys: [blocked_by_id: :id, blocked_profile_id: :id],
-      on_replace: :delete
-    )
-
-    many_to_many(
-      :blocked_profiles,
-      __MODULE__,
-      join_through: BlockedProfile,
-      join_keys: [blocked_profile_id: :id, blocked_by_id: :id],
-      on_replace: :delete
-    )
+    has_many :followers, Follower, foreign_key: :following_id
+    has_many :followings, Follower, foreign_key: :follower_id
+    has_many :blocked_by, BlockedProfile, foreign_key: :blocked_profile_id
+    has_many :blocked_profiles, BlockedProfile, foreign_key: :blocked_by_id
   end
 end
