@@ -20,7 +20,7 @@ config :talk, Talk.Repo,
   url: System.get_env("DATABASE_URL"),
   migration_source: "chat_migrations",
   migration_timestamps: [type: :utc_datetime_usec],
-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "20")
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "60")
 
 config :talk, TalkWeb.Endpoint,
   url: [host: System.get_env("HOST")],
