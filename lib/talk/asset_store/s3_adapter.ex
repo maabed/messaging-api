@@ -2,7 +2,6 @@ defmodule Talk.AssetStore.S3Adapter do
   @moduledoc false
 
   alias ExAws.S3
-  @cdn_url if Mix.env() == :dev, do: "https://images-local.sapien.network/", else: "https://images-qat.sapien.network/"
   @giphy_url Application.get_env(:talk, :giphy_url)
   @behaviour Talk.AssetStore.Adapter
 
@@ -41,12 +40,17 @@ defmodule Talk.AssetStore.S3Adapter do
 
   end
 
-  # def avatar_public_url("https://" <> _ = full_url) do
-  #   full_url
-  # end
+  def avatar_public_url("http://" <> _ = full_url) do
+    full_url
+  end
+
+  def avatar_public_url("https://" <> _ = full_url) do
+    full_url
+  end
 
   def avatar_public_url(pathname) do
     avatar_dir = Application.get_env(:talk, :avatar_dir)
-    @cdn_url <> avatar_dir <> "/" <> pathname
+    prefix = Application.get_env(:talk, :cdn_prefix)
+    "https://" <> prefix <> ".sapien.network/" <> avatar_dir <> "/" <> pathname
   end
 end

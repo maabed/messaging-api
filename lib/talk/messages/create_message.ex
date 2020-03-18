@@ -77,16 +77,16 @@ defmodule Talk.Messages.CreateMessage do
 
   defp after_insert_message(err, _, _, _), do: err
 
-  # defp subscribe_recipients(_message, _group, _user, %{recipient_usernames: []}), do: nil
+  # defp subscribe_recipients(_message, _group, _user, %{recipient_ids: []}), do: nil
 
-  # defp subscribe_recipients(message, group, user, %{recipient_usernames: usernames}) do
+  # defp subscribe_recipients(message, group, user, %{recipient_ids: ids}) do
   #   query =
   #     from p in Profile,
-  #       where: p.username in ^usernames
+  #       where: p.id in ^ids
 
   #   recipients = Repo.all(query)
   #   Enum.each(recipients, fn recipient ->
-  #     Logger.warn("create_message => subscribe_recipients [recipient] => #{inspect recipient.username, pretty: true}")
+  #     Logger.warn("create_message => subscribe_recipients [recipient] => #{inspect recipient.id, pretty: true}")
   #     if recipient.user_id === user.id do
   #       Messages.mark_as_read(recipient, group, [message])
   #     else

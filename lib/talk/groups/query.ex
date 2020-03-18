@@ -25,9 +25,9 @@ defmodule Talk.Groups.Query do
   end
 
   @spec recipients_base_query(User.t(), [String.t()]) :: Ecto.Query.t()
-  def recipients_base_query(%User{} = user, recipient_usernames) do
-    usernames =
-      recipient_usernames
+  def recipients_base_query(%User{} = user, recipient_ids) do
+    ids =
+      recipient_ids
       |> Enum.uniq()
       |> Enum.take(1) # change when add support for groups > 2 users
 
@@ -35,8 +35,7 @@ defmodule Talk.Groups.Query do
       join: gu2 in GroupUser,
       on: gu.id != gu2.id and gu.group_id == gu2.group_id,
       join: p2 in assoc(gu2, :profile),
-      on: p2.id == gu2.profile_id and p2.username in ^usernames,
-      # where: gu2.profile_id in ^usernames,
+      on: p2.id == gu2.profile_id and p2.id in ^ids,
       distinct: true
 
     # sub_query =

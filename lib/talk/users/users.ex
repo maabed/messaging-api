@@ -14,9 +14,8 @@ defmodule Talk.Users do
   def user_base_query() do
     from(u in User,
       join: p in assoc(u, :profile),
-      where: not is_nil(p.selected_at),
-      order_by: [desc: p.selected_at],
-      limit: 1,
+      distinct: p.user_id,
+      order_by: [desc_nulls_last: p.selected_at],
       select: %User{
         id: u.id,
         email: u.email,
@@ -50,6 +49,8 @@ defmodule Talk.Users do
   @spec profiles_base_query(User.t()) :: Ecto.Query.t()
   def profiles_base_query(%User{} = _user) do
     from p in Profile,
+      order_by: [desc_nulls_last: p.selected_at],
+      distinct: p.user_id,
       join: u in assoc(p, :user),
       select: %{
         id: p.id,
@@ -166,7 +167,8 @@ defmodule Talk.Users do
       on: b1.blocked_profile_id != p.id,
       where: p1.id != p.id,
       where: ilike(p.username, ^term) or ilike(p.display_name, ^term),
-      distinct: true
+      order_by: [desc_nulls_last: p.selected_at],
+      distinct: p.userId
     )
     |> apply_rank_query(term)
     |> handle_users_search_results()
@@ -202,9 +204,10 @@ defmodule Talk.Users do
   end
 
   @spec followers_query(User.t()) :: Ecto.Query.t()
-  def followers_query(%User{profile: _profile} = _user) do
+  def followers_query(%User{profile: profile} = _user) do
     from p in Profile,
       join: f in assoc(p, :followers),
+      on: f.follower_id == ^profile.id,
       select: %{
         id: p.id,
         user_id: p.user_id,
@@ -223,10 +226,10 @@ defmodule Talk.Users do
   end
 
   @spec blocked_query(User.t()) :: Ecto.Query.t()
-  def blocked_query(%User{profile: _profile} = _user) do
+  def blocked_query(%User{profile: profile} = _user) do
     from p in Profile,
-      join: b in assoc(p, :blocked_profiles)
-      # where: b.blocked_by_id == ^profile.id
+      join: b in assoc(p, :blocked_profiles),
+      where: b.blocked_by_id == ^profile.id
   end
 
   @spec get_followers(User.t()) :: Ecto.Query.t()

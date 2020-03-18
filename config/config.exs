@@ -12,14 +12,15 @@ config :talk,
   priv_key: System.get_env("JWT_PRIVATE_KEY"),
   giphy_url: "https://media.giphy.com/media",
   bucket: System.get_env("ASSET_STORE_BUCKET"),
-  avatar_dir: System.get_env("ASSET_AVATAR_DIR")
+  avatar_dir: System.get_env("ASSET_AVATAR_DIR"),
+  cdn_prefix: System.get_env("CDN_PREFIX")
 
 config :talk, Talk.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: System.get_env("DATABASE_URL"),
   migration_source: "chat_migrations",
   migration_timestamps: [type: :utc_datetime_usec],
-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "20")
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "60")
 
 config :talk, TalkWeb.Endpoint,
   url: [host: System.get_env("HOST")],
