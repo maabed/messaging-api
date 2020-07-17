@@ -22,8 +22,7 @@ defmodule TalkWeb.UserSocket do
 
       {:ok, socket_with_opts}
     else
-      err ->
-        Logger.error("UserSocket connect Error ==> #{inspect err, pretty: true}")
+      :error ->
         :error
       nil ->
         {:error, "Unauthorized"}
@@ -36,9 +35,7 @@ defmodule TalkWeb.UserSocket do
     # Auth.debug_token(token)
     case Auth.resource_from_token(token) do
       {:ok, {:ok, user}, _claims} -> {:ok, user}
-      err ->
-        Logger.error("UserSocket authorize Error ==> #{inspect err, pretty: true}")
-        :unauthorized
+      _ -> :unauthorized
     end
   end
 
