@@ -80,18 +80,19 @@ defmodule TalkWeb.Resolver.Messages do
   end
 
   @spec create_message(map(), info()) :: message_mutation_result()
-  def create_message(args, %{context: %{user: user}}) do
+  def create_message(args, %{context: %{user: user, __absinthe_plug__: %{uploads: upload}}}) when upload !== %{} do
     with {:ok, group} <- Groups.get_group(user, args.group_id),
          {:ok, true} <- Groups.can_access_group?(user, args.group_id),
-         {:ok, %{message: message, media: media}} <- Messages.create_message(user, group, args) do
-          result =
-            case is_map(media) and not is_nil(media.url) do
-              true ->
-                %Message{ message | media: media }
+         {:ok, %{message: message, media: media}} <-
+          Messages.create_message(user, group, Map.merge(Map.put(args, :media, upload["media"]), %{upload: upload})) do
+            result =
+              case is_map(upload) and not is_nil(media.url) do
+                true ->
+                  %Message{ message | media: media }
 
-              false ->
-                message
-            end
+                false ->
+                  message
+              end
       {:ok, %{success: true, message: result, errors: []}}
     else
       {:error, :message, changeset, _} ->
@@ -106,6 +107,24 @@ defmodule TalkWeb.Resolver.Messages do
           message: nil,
           errors: [%{attribute: "media", message: "Invalid file type"}]
         }}
+      err ->
+        err
+    end
+  end
+
+  @spec create_message(map(), info()) :: message_mutation_result()
+  def create_message(args, %{context: %{user: user}} = _context) do
+    with {:ok, group} <- Groups.get_group(user, args.group_id),
+         {:ok, true} <- Groups.can_access_group?(user, args.group_id),
+         {:ok, %{message: message}} <- Messages.create_message(user, group, args) do
+      {:ok, %{success: true, message: message, errors: []}}
+    else
+      {:error, :message, changeset, _} ->
+        {:ok, %{success: false, message: nil, errors: Helpers.format_errors(changeset)}}
+
+      {:ok, false} ->
+        {:error, "You are not authorized to perform this action."}
+
       err ->
         err
     end
