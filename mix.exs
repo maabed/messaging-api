@@ -1,7 +1,9 @@
 defmodule Talk.MixProject do
+  @moduledoc "Mix file"
+
   use Mix.Project
 
-  @elixir_version "~> 1.9"
+  @elixir_version "~> 1.10.0"
   @version "0.1.0"
 
   def project do
@@ -13,6 +15,7 @@ defmodule Talk.MixProject do
       compilers: [:phoenix, :gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
+      releases: releases(),
       deps: deps(),
       name: "Talk",
       source_url: "https://github.com/SapienNetwork/sapien-chat"
@@ -42,22 +45,31 @@ defmodule Talk.MixProject do
       {:absinthe_plug, "~> 1.4"},
       {:absinthe_phoenix, "~> 1.4"},
       {:dataloader, "~> 1.0"},
-      {:phoenix, "~> 1.4.9"},
-      {:phoenix_pubsub, "~> 1.1"},
-      {:phoenix_ecto, "~> 4.0"},
-      {:guardian, "~> 1.2"},
-      {:ecto_sql, "~> 3.1"},
-      {:postgrex, ">= 0.0.0"},
+      {:phoenix, "~> 1.4.11"},
+      {:phoenix_pubsub, "~> 1.1.2"},
+      {:phoenix_ecto, "~> 4.1.0"},
+      {:guardian, "~> 2.0"},
+      {:ecto_sql, "~> 3.3.3"},
+      {:postgrex, "~> 0.15.0"},
       {:gettext, "~> 0.11"},
+      {:corsica, "~> 1.0"},
       {:jason, "~> 1.0"},
       {:timex, "~> 3.6"},
+      {:csv, "~> 2.3"},
       {:credo, "~>  1.1", only: [:dev, :test], runtime: false},
-      {:plug_cowboy, "~> 2.0"},
+      # {:logster, "~> 1.0"},
+      {:plug_cowboy, "~> 2.1.1"},
       # AWS S3 deps
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
-      {:hackney, "~> 1.15"},
+      {:hackney, github: "benoitc/hackney", override: true},
       {:sweet_xml, "~> 0.6.6"}
+      # timber logger
+      # {:timber, "~> 3.1"},
+      # {:timber_ecto, "~> 2.0"},
+      # {:timber_phoenix, "~> 1.0"},
+      # {:timber_plug, "~> 1.0"}
+
     ]
   end
 
@@ -69,11 +81,18 @@ defmodule Talk.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "ecto.setup": ["ecto.create", "ecto.migrate"],
       "ecto.migrate": ["ecto.migrate"],
-      "ecto.rollback": ["ecto.rollback"],
+      "ecto.reset": ["ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate", "test"]
+    ]
+  end
+
+  defp releases() do
+    [
+      talk: [
+        include_executables_for: [:unix]
+      ]
     ]
   end
 end

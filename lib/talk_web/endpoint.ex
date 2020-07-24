@@ -1,19 +1,14 @@
 defmodule TalkWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :talk
+  use Absinthe.Phoenix.Endpoint
+
+  @origins Application.get_env(:talk, :allowed_origins)
 
   socket "/socket", TalkWeb.UserSocket,
-    websocket: true,
-    longpoll: false
-
-  # Serve at "/" the static files from "priv/static" directory.
-  #
-  # You should set gzip to true if you are running phx.digest
-  # when deploying your static files in production.
-  plug Plug.Static,
-    at: "/",
-    from: :talk,
-    gzip: false,
-    only: ~w(css fonts images js favicon.ico robots.txt)
+    websocket: [
+      timeout: 100_000,
+      check_origin: @origins
+    ]
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
@@ -21,24 +16,30 @@ defmodule TalkWeb.Endpoint do
     plug Phoenix.CodeReloader
   end
 
+  # plug Logster.Plugs.Logger
+  # plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+  # Add Timber plugs for capturing HTTP context and events
+  # plug(Timber.Plug.HTTPContext)
+  # plug(Timber.Plug.Event)
+
+  plug Plug.Logger
   plug Plug.RequestId
-  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
-    json_decoder: Phoenix.json_library()
+    json_decoder: Jason
 
   plug Plug.MethodOverride
   plug Plug.Head
 
-  # The session will be stored in the cookie and signed,
-  # this means its contents can be read but not tampered with.
-  # Set :encryption_salt if you would also like to encrypt it.
-  plug Plug.Session,
-    store: :cookie,
-    key: "_talk_key",
-    signing_salt: "HnGlMbxh"
+  plug Corsica,
+    origins: ["http://localhost:3000", "http://localhost:7000", ~r{^https?://(.*\.?)sapien\.network$}],
+    allow_headers: :all,
+    allow_methods: ["HEAD", "GET"],
+    allow_credentials: true,
+    log: [rejected: :error, invalid: :warn],
+    max_age: 3600
 
   plug TalkWeb.Router
 end

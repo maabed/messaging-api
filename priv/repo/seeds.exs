@@ -1,11 +1,14 @@
 # Script for populating the database. You can run it as:
-#
 #     mix run priv/repo/seeds.exs
-#
-# Inside the script, you can read and write to any of your
-# repositories directly:
-#
-#     Talk.Repo.insert!(%Talk.SomeSchema{})
-#
-# We recommend using the bang functions (`insert!`, `update!`
-# and so on) as they will fail if something goes wrong.
+
+# alias Talk.SapienDB.Sync
+
+# Sync.sync_users()
+# :timer.sleep(:timer.seconds(5))
+
+# Sync.sync_followers()
+# :timer.sleep(:timer.seconds(5))
+
+# Sync.sync_blocked_profiles()
+# :timer.sleep(:timer.seconds(5))
+

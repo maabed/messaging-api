@@ -36,9 +36,17 @@ talk-*.tar
 # variables.
 /config/*.secret.exs
 .env
+.env_docker
+.env-docker
+build/
 
 # docker postgres data
 /pgdata/
 
 .vscode/
 .idea/
+
+.keep.md
+
+# jwt public/private key pairs
+priv/keys/*.pem
