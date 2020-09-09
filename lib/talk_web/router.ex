@@ -16,6 +16,11 @@ defmodule TalkWeb.Router do
     plug TalkWeb.Plug.AuthPipeline
   end
 
+  scope "/api", TalkWeb.API do
+    pipe_through :graphql
+    resources "/files", FileController, only: [:create]
+  end
+
   scope "/" do
     forward "/health-check", TalkWeb.HealthChecks
   end
