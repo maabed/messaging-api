@@ -63,13 +63,13 @@ defmodule Talk.MixProject do
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
       {:hackney, github: "benoitc/hackney", override: true},
-      {:sweet_xml, "~> 0.6.6"}
+      {:sweet_xml, "~> 0.6.6"},
       # timber logger
       # {:timber, "~> 3.1"},
       # {:timber_ecto, "~> 2.0"},
       # {:timber_phoenix, "~> 1.0"},
       # {:timber_plug, "~> 1.0"}
-
+      {:httpoison, "~> 1.6"}
     ]
   end
 

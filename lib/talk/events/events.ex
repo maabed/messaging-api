@@ -106,7 +106,31 @@ defmodule Talk.Events do
     publish(Map.merge(payload, %{type: type}), group_subscription: id)
   end
 
+  def send_notification(payload) do
+    api_url = 'https://onesignal.com/api/v1/notifications'
+    players = [] # Need to get the player ids from devices table using payload.messeage.recipients
+    notification = %{
+      headings: %{
+        en: 'Sapien'
+      },
+      contents: %{
+        en: 'sent you a message' # Need to get the name of the sender
+      },
+      include_player_ids: players,
+      app_id: '095b0cbc-640d-4d07-ba61-a9fb02439af6',
+      excluded_segments: ['Banned Users']
+    }
+    app_auth_key = 'NDFjNDVmYTQtNTcwYi00ZmZlLThjMmEtNGNkMjE3NWQ1ZmYx'
+    headers = [
+      'Content-Type': 'application/json; charset=utf-8',
+      'Authorization': 'Basic #{app_auth_key}'
+    ]
+    options = []
+    HTTPoison.post(api_url, notification, headers, options)
+  end
+
   defp publish(payload, topics) do
     Absinthe.Subscription.publish(TalkWeb.Endpoint, payload, topics)
+    send_notification(payload)
   end
 end
