@@ -2,8 +2,10 @@ defmodule Talk.Events do
   @moduledoc """
   This module encapsulates behavior for publishing messages to listeners
   """
+  import Ecto.Query, warn: false
   require Logger
   alias Talk.Schemas.{Group, Message, MessageReaction, Profile}
+  alias Ecto.Adapters.SQL
 
   # group events
   def group_created(ids, %Group{} = group) do
@@ -104,6 +106,26 @@ defmodule Talk.Events do
 
   defp publish_to_group(id, type, payload) do
     publish(Map.merge(payload, %{type: type}), group_subscription: id)
+  end
+
+  def get_player_ids(receivers, web) do
+    key = if web, do: 'pushWeb', else: 'pushMobile'
+    device_type = if web, do: [5, 6, 7, 8, 9], else: [0, 1, 2, 3];
+    users = Enum.join(receivers, " , ")
+    devices = Enum.join(device_type, " , ")
+
+    sql = """
+      SELECT "playerId"
+      from user_devices d
+        join profiles p
+        on d."profileId" = p."_id"
+      where d."userId" in ($1)
+        and ("notificationSettings"->>'$2')::BOOLEAN = TRUE
+        and ("deviceInfo"->>'device_type')::int in ($3)
+        and d."deletedAt" is NULL
+    """
+
+    result = SQL.query!(Repo, sql, [receivers, key, devices])
   end
 
   def send_notification(payload) do
