@@ -6,7 +6,10 @@ config :talk,
   giphy_url: "https://media.giphy.com/media",
   bucket: System.fetch_env!("ASSET_STORE_BUCKET"),
   avatar_dir: System.fetch_env!("ASSET_AVATAR_DIR"),
-  cdn_prefix: System.fetch_env!("CDN_PREFIX")
+  cdn_prefix: System.fetch_env!("CDN_PREFIX"),
+  redis_url: URI.parse(System.fetch_env!("REDIS_URL")),
+  onesignal_app_id: System.fetch_env!("ONESIGNAL_APP_ID"),
+  onesignal_app_key: System.fetch_env!("ONESIGNAL_APP_KEY")
 
 config :ex_aws,
   access_key_id: System.fetch_env!("AWS_ACCESS_KEY_ID"),

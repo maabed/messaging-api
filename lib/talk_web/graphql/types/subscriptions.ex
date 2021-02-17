@@ -119,38 +119,40 @@ defmodule TalkWeb.Type.Subscriptions do
 
   # subscriptions
   object :subscriptions do
-    subscription do
-      @desc "Triggered when a users/messages related event occurs."
-      field :user_subscription, :user_subscription_response do
-        arg :profile_id, non_null(:id)
+    @desc "Triggered when a users/messages related event occurs."
+    field :user_subscription, :user_subscription_response do
+      arg :profile_id, non_null(:id)
 
-        config fn %{profile_id: id}, %{context: %{user: user}} ->
-          case Users.get_user_by_profile_id(user, id) do
-            {:ok, current_user} ->
-              if current_user.profile_id == user.profile_id do
-                {:ok, topic: id}
-              else
-                {:error, "Not authorized"}
-              end
+      config fn %{profile_id: id}, %{context: %{user: user}} ->
+        case Users.get_user_by_profile_id(user, id) do
+          {:ok, current_user} ->
+            if current_user.profile_id == user.profile_id do
+              {:ok, topic: id}
+            else
+              {:error, "Not authorized"}
+            end
 
-            err ->
-              err
-          end
+          err ->
+            err
         end
       end
 
-      @desc "Triggered when a groups related event occurs."
-      field :group_subscription, :group_subscription_response do
-        arg :group_id, non_null(:id)
+      resolve fn user_subscription_response, _, _ ->
+        {:ok, user_subscription_response}
+      end
+    end
 
-        config fn %{group_id: id}, %{context: %{user: user}} ->
-          case Groups.get_group(user, id) do
-            {:ok, group} ->
-              {:ok, topic: group.id}
+    @desc "Triggered when a groups related event occurs."
+    field :group_subscription, :group_subscription_response do
+      arg :group_id, non_null(:id)
 
-            err ->
-              err
-          end
+      config fn %{group_id: id}, %{context: %{user: user}} ->
+        case Groups.get_group(user, id) do
+          {:ok, group} ->
+            {:ok, topic: group.id}
+
+          err ->
+            err
         end
       end
     end
