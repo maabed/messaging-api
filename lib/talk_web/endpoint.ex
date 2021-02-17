@@ -45,13 +45,12 @@ defmodule TalkWeb.Endpoint do
     only: ~w(css images js),
     only_matching: ~w(favicon robots)
 
-  # plug Corsica,
-  #   origins: ["http://localhost:3000", "http://localhost:7000", ~r{^https?://(.*\.?)sapien\.network$}, ~r{^https?://(.*\.?)ngrok\.io$}, "http://sapien-front.ngrok.io", "https://sapien-front.eu.ngrok.io"],
-  #   allow_headers: :all,
-  #   allow_methods: ["HEAD", "GET"],
-  #   allow_credentials: true,
-  #   log: [rejected: :error, invalid: :warn],
-  #   max_age: 3600
+  plug Corsica,
+    origins: ["http://localhost:3000", "http://localhost:7000", ~r{^https?://(.*\.?)sapien\.network$}],
+    allow_headers: :all,
+    allow_credentials: true,
+    log: [rejected: :error, invalid: :warn],
+    max_age: 3600
 
   plug TalkWeb.Router
 
