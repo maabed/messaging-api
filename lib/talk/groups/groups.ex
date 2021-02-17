@@ -208,14 +208,14 @@ defmodule Talk.Groups do
     end
   end
 
-  defp after_create_group({:ok, group}, _user, recipients) do
+  defp after_create_group({:ok, group}, user, recipients) do
     Enum.each(recipients, fn recipient ->
       set_owner_role(group, recipient)
       subscribe(group, recipient)
     end)
 
     {:ok, accessor_ids} = get_accessor_ids(group)
-    _ = Events.group_created(accessor_ids, group)
+    _ = Events.group_created(accessor_ids, group, user)
 
     {:ok, %{group: group}}
   end
@@ -247,6 +247,18 @@ defmodule Talk.Groups do
         left_join: m in Message,
         on: m.id == ^msg_id,
         where: m.profile_id != gu.profile_id,
+        order_by: {:asc, gu.username}
+
+    {:ok, Repo.all(query)}
+  end
+
+  @spec list_recipients(Group.t()) :: {:ok, [GroupUser.t()]} | no_return()
+  def list_recipients(group) do
+    base_query = group_members_base_query(group)
+    Logger.warn("base_query #{inspect base_query, pretty: true}")
+    query =
+      from gu in subquery(base_query),
+        where: gu.profile_id != ^group.profile_id,
         order_by: {:asc, gu.username}
 
     {:ok, Repo.all(query)}

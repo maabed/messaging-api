@@ -8,6 +8,7 @@ defmodule Talk.Messages do
   alias Ecto.Changeset
   alias Talk.{Events, Groups, Messages}
   alias Talk.Messages.{CreateMessage, UpdateMessage}
+
   alias Talk.Schemas.{
     Group,
     GroupUser,
@@ -79,22 +80,24 @@ defmodule Talk.Messages do
   #   CreateMessage.perform(user, params)
   # end
 
-  @spec get_message_read_status(Group.t(), String.t(), String.t()) :: {:ok, MessageGroup.t() | nil}
+  @spec get_message_read_status(Group.t(), String.t(), String.t()) ::
+          {:ok, MessageGroup.t() | nil}
   def get_message_read_status(%Group{id: group_id}, message_id, _profile_id) do
-    query = from mg in MessageGroup,
-      join: p in assoc(mg, :profile),
-      where: mg.group_id == ^group_id,
-      where: mg.message_id == ^message_id,
-      select: %{
-        profile_id: p.id,
-        user_id: p.user_id,
-        username: p.username,
-        read_status: mg.read_status
-      }
+    query =
+      from mg in MessageGroup,
+        join: p in assoc(mg, :profile),
+        where: mg.group_id == ^group_id,
+        where: mg.message_id == ^message_id,
+        select: %{
+          profile_id: p.id,
+          user_id: p.user_id,
+          username: p.username,
+          read_status: mg.read_status
+        }
 
     query
-      |> Repo.all
-      |> handle_get_message_read_status
+    |> Repo.all()
+    |> handle_get_message_read_status
   end
 
   defp handle_get_message_read_status(message_groups), do: {:ok, message_groups}
@@ -112,12 +115,14 @@ defmodule Talk.Messages do
     UpdateMessage.perform(user, message, params)
   end
 
-  @spec mark_as_request(Profile.t(), [Message.t()]) :: {:ok, [Message.t()]} | {:error, Changeset.t()}
+  @spec mark_as_request(Profile.t(), [Message.t()]) ::
+          {:ok, [Message.t()]} | {:error, Changeset.t()}
   def mark_as_request(%User{} = user, messages) do
     UpdateMessage.mark_as_request(user, messages)
   end
 
-  @spec mark_as_not_request(Profile.t(), [Message.t()]) :: {:ok, [Message.t()]} | {:error, Changeset.t()}
+  @spec mark_as_not_request(Profile.t(), [Message.t()]) ::
+          {:ok, [Message.t()]} | {:error, Changeset.t()}
   def mark_as_not_request(%User{} = user, messages) do
     UpdateMessage.mark_as_not_request(user, messages)
   end
@@ -185,12 +190,14 @@ defmodule Talk.Messages do
   def mark_all_as_read(%Profile{id: profile_id}, %Group{id: group_id}) do
     from(
       mg in MessageGroup,
-        where: mg.profile_id == ^profile_id and mg.group_id == ^group_id
+      where: mg.profile_id == ^profile_id and mg.group_id == ^group_id
     )
-    |> Repo.update_all(set: [
+    |> Repo.update_all(
+      set: [
         read_status: "READ",
         updated_at: NaiveDateTime.utc_now()
-      ])
+      ]
+    )
     |> after_mark_all_as_read(profile_id, group_id)
   end
 
@@ -198,12 +205,14 @@ defmodule Talk.Messages do
   def mark_all_as_read(%Profile{id: profile_id}) do
     from(
       mg in MessageGroup,
-        where: mg.profile_id == ^profile_id
+      where: mg.profile_id == ^profile_id
     )
-    |> Repo.update_all(set: [
+    |> Repo.update_all(
+      set: [
         read_status: "READ",
         updated_at: NaiveDateTime.utc_now()
-      ])
+      ]
+    )
     |> after_mark_all_as_read(profile_id)
   end
 
@@ -212,7 +221,8 @@ defmodule Talk.Messages do
     {:ok, count}
   end
 
-  defp after_mark_all_as_read(error, _, _), do: error # group_id
+  # group_id
+  defp after_mark_all_as_read(error, _, _), do: error
 
   defp after_mark_all_as_read({count, nil}, profile_id) do
     Events.messages_marked_all_as_read(profile_id, count)
@@ -243,7 +253,8 @@ defmodule Talk.Messages do
     results =
       Enum.map(medias, fn media ->
         media
-        |> Media.update_changeset(%{message_id: message.id}) # set mo_for_object_id
+        # set mo_for_object_id
+        |> Media.update_changeset(%{message_id: message.id})
         |> Repo.update()
         |> handle_media_attached(media)
       end)
@@ -340,8 +351,13 @@ defmodule Talk.Messages do
 
   defp after_create_message_reaction(err, _, _), do: err
 
-  @spec delete_message_reaction(User.t(), Message.t(), String.t()) :: reaction_result() | {:error, String.t()}
-  def delete_message_reaction(%User{profile_id: profile_id} = user, %Message{id: message_id} = message, value) do
+  @spec delete_message_reaction(User.t(), Message.t(), String.t()) ::
+          reaction_result() | {:error, String.t()}
+  def delete_message_reaction(
+        %User{profile_id: profile_id} = user,
+        %Message{id: message_id} = message,
+        value
+      ) do
     query =
       from mr in MessageReaction,
         where: mr.profile_id == ^profile_id,
@@ -381,7 +397,8 @@ defmodule Talk.Messages do
       Repo.get_by(MessageGroup,
         message_id: message.id,
         profile_id: profile_id,
-        group_id: group.id)
+        group_id: group.id
+      )
 
     case exists do
       nil ->
