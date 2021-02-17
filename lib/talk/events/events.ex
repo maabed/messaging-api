@@ -2,11 +2,14 @@ defmodule Talk.Events do
   @moduledoc """
   This module encapsulates behavior for publishing messages to listeners
   """
-  require Logger
-  alias Talk.Schemas.{Group, Message, MessageReaction, Profile}
+  alias Talk.Schemas.{Group, Message, MessageReaction, Profile, User}
+  alias Talk.{Users, Groups, OneSignal}
+  # alias Talk.Redix
 
   # group events
-  def group_created(ids, %Group{} = group) do
+  def group_created(ids, %Group{} = group, %User{} = sender) do
+    {:ok, recipients} = Groups.list_recipients(group)
+    send_push_notification(recipients, "#{sender.profile.username} start new conversation")
     publish_to_many_users(ids, :group_created, %{group: group})
   end
 
@@ -43,7 +46,12 @@ defmodule Talk.Events do
   end
 
   # message events
-  def message_created(ids, %Message{} = message) do
+  def message_created(ids, %Message{} = message, %Group{} = group, %User{} = sender) do
+    # ws trigger
+    # Redix.command(["PUBLISH", "chat:profileId", Jason.encode!(%{name: "marco", message: message.content})])
+    {:ok, recipients} = Groups.list_recipients(group, message.id)
+    send_push_notification(recipients, "#{sender.profile.username} sent you a message")
+
     publish_to_many_users(ids, :message_created, %{message: message})
   end
 
@@ -108,5 +116,16 @@ defmodule Talk.Events do
 
   defp publish(payload, topics) do
     Absinthe.Subscription.publish(TalkWeb.Endpoint, payload, topics)
+  end
+
+  def send_push_notification(recipients, message) do
+    Enum.each recipients, fn r ->
+      {:ok, recipient} = Users.get_user_by_profile_id(r.profile_id)
+      case OneSignal.get_player_id(recipient.id, true) do
+        {:ok, player_id} ->
+          OneSignal.post(message, player_id)
+        _ -> nil
+      end
+    end
   end
 end

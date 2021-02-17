@@ -71,7 +71,7 @@ defmodule Talk.Messages.CreateMessage do
   defp after_insert_message({:ok, %{message: message} = result}, user, group, _params) do
     # subscribe_recipients(message, group, user, params)
     subscribe_group_users(message, result, user)
-    send_events(message, group)
+    send_events(message, group, user)
     {:ok, result}
   end
 
@@ -108,8 +108,8 @@ defmodule Talk.Messages.CreateMessage do
     end)
   end
 
-  defp send_events(message, group) do
+  defp send_events(message, group, user) do
     {:ok, profile_ids} = Groups.get_accessor_ids(group)
-    Events.message_created(profile_ids, message)
+    Events.message_created(profile_ids, message, group, user)
   end
 end

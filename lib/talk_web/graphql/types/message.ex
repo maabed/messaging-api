@@ -130,6 +130,7 @@ defmodule TalkWeb.Type.Message do
       arg :is_request, :boolean
       arg :media, :upload
       arg :media_id, :string
+      arg :url, :string
       arg :recipient_ids, list_of(:string)
       resolve &Resolver.create_message/2
     end
