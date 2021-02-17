@@ -41,34 +41,36 @@ defmodule Talk.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:absinthe, "~> 1.4"},
-      {:absinthe_plug, "~> 1.4"},
-      {:absinthe_phoenix, "~> 1.4"},
+      {:absinthe, "~> 1.5.5"},
+      {:absinthe_plug, "~> 1.5.0"},
+      {:absinthe_phoenix, "~> 2.0.0"},
       {:dataloader, "~> 1.0"},
-      {:phoenix, "~> 1.4.11"},
-      {:phoenix_pubsub, "~> 1.1.2"},
+      {:phoenix, "~> 1.5.3"},
+      {:phoenix_pubsub, "~> 2.0"},
       {:phoenix_ecto, "~> 4.1.0"},
       {:guardian, "~> 2.0"},
-      {:ecto_sql, "~> 3.3.3"},
+      {:ecto_sql, "~> 3.4.4"},
       {:postgrex, "~> 0.15.0"},
       {:gettext, "~> 0.11"},
       {:corsica, "~> 1.0"},
       {:jason, "~> 1.0"},
       {:timex, "~> 3.6"},
-      {:csv, "~> 2.3"},
+      {:httpoison, "~> 1.7"},
+      {:redix, "~> 1.0"},
+      # {:logger_json, "~> 4.0"},
+      # {:prometheus_ex, "~> 3.0"},
+      # {:prometheus_plugs, "~> 1.1.1"},
+      # {:prometheus_process_collector, "~> 1.6"},
+      # {:prometheus_phoenix, "~> 1.2"},
+      # {:prometheus_ecto, "~> 1.4.3"},
       {:credo, "~>  1.1", only: [:dev, :test], runtime: false},
       # {:logster, "~> 1.0"},
-      {:plug_cowboy, "~> 2.1.1"},
+      {:plug_cowboy, "~> 2.2"},
       # AWS S3 deps
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
       {:hackney, github: "benoitc/hackney", override: true},
-      {:sweet_xml, "~> 0.6.6"}
-      # timber logger
-      # {:timber, "~> 3.1"},
-      # {:timber_ecto, "~> 2.0"},
-      # {:timber_phoenix, "~> 1.0"},
-      # {:timber_plug, "~> 1.0"}
+      {:sweet_xml, "~> 0.6.6"},
 
     ]
   end
