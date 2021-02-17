@@ -44,7 +44,6 @@ defmodule Talk.OneSignal do
   defp to_json(%Postgrex.Result{columns: columns, rows: rows}) do
     results =
       rows
-      |> IO.inspect(pretty: true, label: "===== [rows] =====")
       |> Enum.map(fn row ->
         columns
         |> Enum.zip(row)
