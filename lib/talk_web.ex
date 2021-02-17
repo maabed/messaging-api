@@ -31,7 +31,7 @@ defmodule TalkWeb do
 
   def router do
     quote do
-      use Phoenix.Router
+      use Phoenix.Router #, log: false
       import TalkWeb.Plugs
       import Plug.Conn
       import Phoenix.Controller
@@ -40,7 +40,7 @@ defmodule TalkWeb do
 
   def channel do
     quote do
-      use Phoenix.Channel
+      use Phoenix.Channel #, log_join: false, log_handle_in: false
       import TalkWeb.Gettext
     end
   end
